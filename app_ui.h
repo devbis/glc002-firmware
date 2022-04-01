@@ -27,19 +27,18 @@
 /**********************************************************************
  * CONSTANT
  */
-#define LED_ON						1
-#define LED_OFF						0
-
+#define LED_ON 1
+#define LED_OFF 0
 
 /**********************************************************************
  * TYPEDEFS
  */
-enum{
+enum
+{
 	APP_STATE_NORMAL,
 	APP_FACTORY_NEW_SET_CHECK,
 	APP_FACTORY_NEW_DOING,
 };
-
 
 /**********************************************************************
  * FUNCTIONS
@@ -50,4 +49,4 @@ void led_off(u32 pin);
 void localPermitJoinState(void);
 void app_key_handler(void);
 
-#endif	/* _APP_UI_H_ */
+#endif /* _APP_UI_H_ */

@@ -36,70 +36,86 @@
  * LOCAL CONSTANTS
  */
 
-
 /**********************************************************************
  * TYPEDEFS
  */
-
 
 /**********************************************************************
  * GLOBAL VARIABLES
  */
 
-
 /**********************************************************************
  * LOCAL FUNCTIONS
  */
-void led_on(u32 pin){
+void led_on(u32 pin)
+{
 	drv_gpio_write(pin, LED_ON);
 }
 
-void led_off(u32 pin){
+void led_off(u32 pin)
+{
 	drv_gpio_write(pin, LED_OFF);
 }
 
-void led_init(void){
+void led_init(void)
+{
 	led_off(LED_STATUS_R);
 	led_off(LED_STATUS_G);
 	led_off(LED_STATUS_B);
 }
 
-void localPermitJoinState(void){
+void localPermitJoinState(void)
+{
 	static bool assocPermit = 0;
-	if(assocPermit != zb_getMacAssocPermit()){
+	if (assocPermit != zb_getMacAssocPermit())
+	{
 		assocPermit = zb_getMacAssocPermit();
-		if(assocPermit){
+		if (assocPermit)
+		{
 			led_on(LED_STATUS_R);
-		}else{
+		}
+		else
+		{
 			led_off(LED_STATUS_R);
 		}
 	}
 }
 
-void buttonKeepPressed(u8 btNum){
-	if(btNum == VK_SW1){
+void buttonKeepPressed(u8 btNum)
+{
+	if (btNum == VK_SW1)
+	{
 		gLightCtx.state = APP_FACTORY_NEW_DOING;
 		led_on(LED_STATUS_R);
 		led_on(LED_STATUS_G);
 		led_on(LED_STATUS_B);
 
 		zb_factoryReset();
-	}else if(btNum == VK_SW2){
-
+	}
+	else if (btNum == VK_SW2)
+	{
 	}
 }
 
-void buttonShortPressed(u8 btNum){
-	if(btNum == VK_SW1){
-		if(zb_isDeviceJoinedNwk()){
+void buttonShortPressed(u8 btNum)
+{
+	if (btNum == VK_SW1)
+	{
+		if (zb_isDeviceJoinedNwk())
+		{
 			gLightCtx.sta = !gLightCtx.sta;
-			if(gLightCtx.sta){
+			if (gLightCtx.sta)
+			{
 				sampleLight_onoff(ZCL_ONOFF_STATUS_ON);
-			}else{
+			}
+			else
+			{
 				sampleLight_onoff(ZCL_ONOFF_STATUS_OFF);
 			}
 		}
-	}else if(btNum == VK_SW2){
+	}
+	else if (btNum == VK_SW2)
+	{
 		/* toggle local permit Joining */
 		static u8 duration = 0;
 		duration = duration ? 0 : 0xff;
@@ -107,46 +123,56 @@ void buttonShortPressed(u8 btNum){
 	}
 }
 
-void keyScan_keyPressedCB(kb_data_t *kbEvt){
-//	u8 toNormal = 0;
+void keyScan_keyPressedCB(kb_data_t *kbEvt)
+{
+	//	u8 toNormal = 0;
 	u8 keyCode = kbEvt->keycode[0];
-//	static u8 lastKeyCode = 0xff;
+	//	static u8 lastKeyCode = 0xff;
 
 	buttonShortPressed(keyCode);
 
-	if(keyCode == VK_SW1){
+	if (keyCode == VK_SW1)
+	{
 		gLightCtx.keyPressedTime = clock_time();
 		gLightCtx.state = APP_FACTORY_NEW_SET_CHECK;
 	}
 }
 
-
-void keyScan_keyReleasedCB(u8 keyCode){
+void keyScan_keyReleasedCB(u8 keyCode)
+{
 	gLightCtx.state = APP_STATE_NORMAL;
 }
 
 volatile u8 T_keyPressedNum = 0;
-void app_key_handler(void){
+void app_key_handler(void)
+{
 	static u8 valid_keyCode = 0xff;
 
-	if(gLightCtx.state == APP_FACTORY_NEW_SET_CHECK){
-		if(clock_time_exceed(gLightCtx.keyPressedTime, 5*1000*1000)){
+	if (gLightCtx.state == APP_FACTORY_NEW_SET_CHECK)
+	{
+		if (clock_time_exceed(gLightCtx.keyPressedTime, 5 * 1000 * 1000))
+		{
 			buttonKeepPressed(VK_SW1);
 		}
 	}
 
-	if(kb_scan_key(0 , 1)){
+	if (kb_scan_key(0, 1))
+	{
 		T_keyPressedNum++;
-		if(kb_event.cnt){
+		if (kb_event.cnt)
+		{
 			keyScan_keyPressedCB(&kb_event);
-			if(kb_event.cnt == 1){
+			if (kb_event.cnt == 1)
+			{
 				valid_keyCode = kb_event.keycode[0];
 			}
-		}else{
+		}
+		else
+		{
 			keyScan_keyReleasedCB(valid_keyCode);
 			valid_keyCode = 0xff;
 		}
 	}
 }
 
-#endif  /* __PROJECT_TL_DIMMABLE_LIGHT__ */
+#endif /* __PROJECT_TL_DIMMABLE_LIGHT__ */

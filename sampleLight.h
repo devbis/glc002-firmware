@@ -24,150 +24,160 @@
 #ifndef _SAMPLE_LIGHT_H_
 #define _SAMPLE_LIGHT_H_
 
-
-
 /**********************************************************************
  * CONSTANT
  */
-#define SAMPLE_LIGHT_ENDPOINT   0x01
-#define SAMPLE_TEST_ENDPOINT	0x02
+#define SAMPLE_LIGHT_ENDPOINT 0x01
+#define SAMPLE_TEST_ENDPOINT 0x02
 
 /**********************************************************************
  * TYPEDEFS
  */
-typedef struct{
+typedef struct
+{
 	u8 keyType; /* ERTIFICATION_KEY or MASTER_KEY key for touch-link or distribute network
-	 	 	 	 SS_UNIQUE_LINK_KEY or SS_GLOBAL_LINK_KEY for distribute network */
-	u8 key[16];	/* the key used */
-}app_linkKey_info_t;
+				 SS_UNIQUE_LINK_KEY or SS_GLOBAL_LINK_KEY for distribute network */
+	u8 key[16]; /* the key used */
+} app_linkKey_info_t;
 
-typedef struct{
+typedef struct
+{
 	ev_timer_event_t *timerLedEvt;
 	u32 keyPressedTime;
 
 	u16 ledOnTime;
 	u16 ledOffTime;
-	u8 	oriSta;		//original state before blink
-	u8 	sta;		//current state in blink
-	u8 	times;		//blink times
-	u8  state;
+	u8 oriSta; // original state before blink
+	u8 sta;	   // current state in blink
+	u8 times;  // blink times
+	u8 state;
 
 	bool bdbFindBindFlg;
 	bool lightAttrsChanged;
 
 	app_linkKey_info_t tcLinkKey;
-}app_ctx_t;
+} app_ctx_t;
 
 /**
  *  @brief Defined for basic cluster attributes
  */
-typedef struct{
-	u8 	zclVersion;
-	u8	appVersion;
-	u8	stackVersion;
-	u8	hwVersion;
-	u8	manuName[ZCL_BASIC_MAX_LENGTH];
-	u8	modelId[ZCL_BASIC_MAX_LENGTH];
-	u8	swBuildId[ZCL_BASIC_MAX_LENGTH];
-	u8	powerSource;
-	u8	deviceEnable;
-}zcl_basicAttr_t;
+typedef struct
+{
+	u8 zclVersion;
+	u8 appVersion;
+	u8 stackVersion;
+	u8 hwVersion;
+	u8 manuName[ZCL_BASIC_MAX_LENGTH];
+	u8 modelId[ZCL_BASIC_MAX_LENGTH];
+	u8 swBuildId[ZCL_BASIC_MAX_LENGTH];
+	u8 powerSource;
+	u8 deviceEnable;
+} zcl_basicAttr_t;
 
 /**
  *  @brief Defined for identify cluster attributes
  */
-typedef struct{
-	u16	identifyTime;
-}zcl_identifyAttr_t;
+typedef struct
+{
+	u16 identifyTime;
+} zcl_identifyAttr_t;
 
 /**
  *  @brief Defined for group cluster attributes
  */
-typedef struct{
-	u8	nameSupport;
-}zcl_groupAttr_t;
+typedef struct
+{
+	u8 nameSupport;
+} zcl_groupAttr_t;
 
 /**
  *  @brief Defined for scene cluster attributes
  */
-typedef struct{
-	u8	 sceneCount;
-	u8	 currentScene;
-	u8	 nameSupport;
+typedef struct
+{
+	u8 sceneCount;
+	u8 currentScene;
+	u8 nameSupport;
 	bool sceneValid;
-	u16	 currentGroup;
-}zcl_sceneAttr_t;
+	u16 currentGroup;
+} zcl_sceneAttr_t;
 
 /**
  *  @brief Defined for on/off cluster attributes
  */
-typedef struct{
-	u16	 onTime;
-	u16	 offWaitTime;
-	u8	 startUpOnOff;
+typedef struct
+{
+	u16 onTime;
+	u16 offWaitTime;
+	u8 startUpOnOff;
 	bool onOff;
 	bool globalSceneControl;
-}zcl_onOffAttr_t;
+} zcl_onOffAttr_t;
 
 /**
  *  @brief Defined for level cluster attributes
  */
-typedef struct{
-	u16	remainingTime;
-	u8	curLevel;
-	u8	startUpCurrentLevel;
-}zcl_levelAttr_t;
+typedef struct
+{
+	u16 remainingTime;
+	u8 curLevel;
+	u8 startUpCurrentLevel;
+} zcl_levelAttr_t;
 
 /**
  *  @brief Defined for color control cluster attributes
  */
-typedef struct{
-	u8	colorMode;
-	u8	options;
-	u8	enhancedColorMode;
-	u8	numOfPrimaries;
+typedef struct
+{
+	u8 colorMode;
+	u8 options;
+	u8 enhancedColorMode;
+	u8 numOfPrimaries;
 	u16 colorCapabilities;
-	u8	currentHue;
-	u8	currentSaturation;
+	u8 currentHue;
+	u8 currentSaturation;
 	u16 currentX;
 	u16 currentY;
-	u16	enhancedCurrentHue;
-	u8	colorLoopActive;
-	u8	colorLoopDirection;
-	u16	colorLoopTime;
+	u16 enhancedCurrentHue;
+	u8 colorLoopActive;
+	u8 colorLoopDirection;
+	u16 colorLoopTime;
 	u16 colorLoopStartEnhancedHue;
 	u16 colorLoopStoredEnhancedHue;
 	u16 colorTemperatureMireds;
 	u16 colorTempPhysicalMinMireds;
 	u16 colorTempPhysicalMaxMireds;
 	u16 startUpColorTemperatureMireds;
-}zcl_lightColorCtrlAttr_t;
+} zcl_lightColorCtrlAttr_t;
 
 /**
  *  @brief Defined for saving on/off attributes
  */
-typedef struct {
-	u8	onOff;
-	u8	startUpOnOff;
-}zcl_nv_onOff_t;
+typedef struct
+{
+	u8 onOff;
+	u8 startUpOnOff;
+} zcl_nv_onOff_t;
 
 /**
  *  @brief Defined for saving level attributes
  */
-typedef struct {
-	u8	curLevel;
-	u8	startUpCurLevel;
-}zcl_nv_level_t;
+typedef struct
+{
+	u8 curLevel;
+	u8 startUpCurLevel;
+} zcl_nv_level_t;
 
 /**
  *  @brief Defined for saving color control attributes
  */
-typedef struct {
-	u8	currentHue;
-	u8	currentSaturation;
-	u16	colorTemperatureMireds;
-	u16	startUpColorTemperatureMireds;
-}zcl_nv_colorCtrl_t;
+typedef struct
+{
+	u8 currentHue;
+	u8 currentSaturation;
+	u16 colorTemperatureMireds;
+	u16 startUpColorTemperatureMireds;
+} zcl_nv_colorCtrl_t;
 
 /**********************************************************************
  * GLOBAL VARIABLES
@@ -175,7 +185,6 @@ typedef struct {
 extern app_ctx_t gLightCtx;
 extern bdb_commissionSetting_t g_bdbCommissionSetting;
 extern bdb_appCb_t g_zbDemoBdbCb;
-
 
 extern u8 SAMPLELIGHT_CB_CLUSTER_NUM;
 extern const zcl_specClusterInfo_t g_sampleLightClusterList[];
@@ -193,10 +202,10 @@ extern zcl_onOffAttr_t g_zcl_onOffAttrs;
 extern zcl_levelAttr_t g_zcl_levelAttrs;
 extern zcl_lightColorCtrlAttr_t g_zcl_colorCtrlAttrs;
 
-#define zcl_sceneAttrGet()		&g_zcl_sceneAttrs
-#define zcl_onoffAttrGet()		&g_zcl_onOffAttrs
-#define zcl_levelAttrGet()		&g_zcl_levelAttrs
-#define zcl_colorAttrGet()		&g_zcl_colorCtrlAttrs
+#define zcl_sceneAttrGet() &g_zcl_sceneAttrs
+#define zcl_onoffAttrGet() &g_zcl_onOffAttrs
+#define zcl_levelAttrGet() &g_zcl_levelAttrs
+#define zcl_colorAttrGet() &g_zcl_colorCtrlAttrs
 
 /**********************************************************************
  * FUNCTIONS

@@ -23,7 +23,6 @@
 
 #if (__PROJECT_TL_DIMMABLE_LIGHT__)
 
-
 /**********************************************************************
  * INCLUDES
  */
@@ -31,7 +30,6 @@
 #include "zb_api.h"
 #include "zcl_include.h"
 #include "sampleLight.h"
-
 
 /*********************************************************************
  * @fn      sampleLight_sceneRecallReqHandler
@@ -50,20 +48,20 @@ static void sampleLight_sceneRecallReqHandler(zclIncomingAddrInfo_t *pAddrInfo, 
 #ifdef ZCL_ON_OFF
 	zcl_onOffAttr_t *pOnOff = zcl_onoffAttrGet();
 
-	pOnOff->onOff = pScene->extField[extLen+3];
+	pOnOff->onOff = pScene->extField[extLen + 3];
 	extLen += 4;
 #endif
 
 #ifdef ZCL_LEVEL_CTRL
-	u8 level = pScene->extField[extLen+3];
+	u8 level = pScene->extField[extLen + 3];
 	extLen += 4;
 #endif
 
 #ifdef ZCL_LIGHT_COLOR_CONTROL
-	u8 colorMode  = pScene->extField[extLen+3];
-	u8 hue = pScene->extField[extLen+4];
-	u8 saturation = pScene->extField[extLen+5];
-	u16 colorTemperatureMireds = BUILD_U16(pScene->extField[extLen+6], pScene->extField[extLen+7]);
+	u8 colorMode = pScene->extField[extLen + 3];
+	u8 hue = pScene->extField[extLen + 4];
+	u8 saturation = pScene->extField[extLen + 5];
+	u16 colorTemperatureMireds = BUILD_U16(pScene->extField[extLen + 6], pScene->extField[extLen + 7]);
 	extLen += 8;
 #endif
 
@@ -77,14 +75,17 @@ static void sampleLight_sceneRecallReqHandler(zclIncomingAddrInfo_t *pAddrInfo, 
 #endif
 
 #ifdef ZCL_LIGHT_COLOR_CONTROL
-	if (colorMode == ZCL_COLOR_MODE_CURRENT_HUE_SATURATION) {
+	if (colorMode == ZCL_COLOR_MODE_CURRENT_HUE_SATURATION)
+	{
 		zcl_colorCtrlMoveToColorTemperatureCmd_t move2ColorTemp;
 		move2ColorTemp.colorTemperature = colorTemperatureMireds;
 		move2ColorTemp.transitionTime = pScene->transTime;
 		move2ColorTemp.optPresent = 0;
 
 		sampleLight_colorCtrlCb(pAddrInfo, ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_COLOR_TEMPERATURE, &move2ColorTemp);
-	} else {
+	}
+	else
+	{
 		zcl_colorCtrlMoveToHueAndSaturationCmd_t move2HueAndSat;
 		move2HueAndSat.hue = hue;
 		move2HueAndSat.saturation = saturation;
@@ -156,17 +157,20 @@ static void sampleLight_sceneStoreReqHandler(zcl_sceneEntry_t *pScene)
  */
 status_t sampleLight_sceneCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload)
 {
-	if(pAddrInfo->dstEp == SAMPLE_LIGHT_ENDPOINT){
-		if(pAddrInfo->dirCluster == ZCL_FRAME_CLIENT_SERVER_DIR){
-			switch(cmdId){
-				case ZCL_CMD_SCENE_STORE_SCENE:
-					sampleLight_sceneStoreReqHandler((zcl_sceneEntry_t *)cmdPayload);
-					break;
-				case ZCL_CMD_SCENE_RECALL_SCENE:
-					sampleLight_sceneRecallReqHandler(pAddrInfo, (zcl_sceneEntry_t *)cmdPayload);
-					break;
-				default:
-					break;
+	if (pAddrInfo->dstEp == SAMPLE_LIGHT_ENDPOINT)
+	{
+		if (pAddrInfo->dirCluster == ZCL_FRAME_CLIENT_SERVER_DIR)
+		{
+			switch (cmdId)
+			{
+			case ZCL_CMD_SCENE_STORE_SCENE:
+				sampleLight_sceneStoreReqHandler((zcl_sceneEntry_t *)cmdPayload);
+				break;
+			case ZCL_CMD_SCENE_RECALL_SCENE:
+				sampleLight_sceneRecallReqHandler(pAddrInfo, (zcl_sceneEntry_t *)cmdPayload);
+				break;
+			default:
+				break;
 			}
 		}
 	}
@@ -174,4 +178,4 @@ status_t sampleLight_sceneCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *c
 	return ZCL_STA_SUCCESS;
 }
 
-#endif  /* __PROJECT_TL_DIMMABLE_LIGHT__ */
+#endif /* __PROJECT_TL_DIMMABLE_LIGHT__ */

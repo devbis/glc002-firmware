@@ -39,11 +39,9 @@
  * LOCAL CONSTANTS
  */
 
-
 /**********************************************************************
  * TYPEDEFS
  */
-
 
 /**********************************************************************
  * LOCAL FUNCTIONS
@@ -52,7 +50,6 @@
 /**********************************************************************
  * GLOBAL VARIABLES
  */
-
 
 /**********************************************************************
  * LOCAL VARIABLES
@@ -74,13 +71,15 @@ static void afTest_testReqPrc(apsdeDataInd_t *pApsdeInd)
 
 	u8 dataLen = 50;
 	u8 *pBuf = (u8 *)ev_buf_allocate(dataLen);
-	if(pBuf){
+	if (pBuf)
+	{
 		u8 *pData = pBuf;
 
 		*pData++ = LO_UINT16(g_afTest_rcvReqCnt);
 		*pData++ = HI_UINT16(g_afTest_rcvReqCnt);
 
-		for(u8 i = 0; i < dataLen - 2; i++){
+		for (u8 i = 0; i < dataLen - 2; i++)
+		{
 			*pData++ = i;
 		}
 
@@ -115,20 +114,21 @@ void afTest_rx_handler(void *arg)
 {
 	apsdeDataInd_t *pApsdeInd = (apsdeDataInd_t *)arg;
 
-	switch(pApsdeInd->indInfo.cluster_id){
-		case ZCL_CLUSTER_TELINK_SDK_TEST_CLEAR_REQ:
-			g_afTest_rcvReqCnt = 0;
-			afTest_testClearReqPrc(pApsdeInd);
-			break;
-		case ZCL_CLUSTER_TELINK_SDK_TEST_REQ:
-			g_afTest_rcvReqCnt++;
-			afTest_testReqPrc(pApsdeInd);
-			break;
-		case ZCL_CLUSTER_TELINK_SDK_TEST_RSP:
+	switch (pApsdeInd->indInfo.cluster_id)
+	{
+	case ZCL_CLUSTER_TELINK_SDK_TEST_CLEAR_REQ:
+		g_afTest_rcvReqCnt = 0;
+		afTest_testClearReqPrc(pApsdeInd);
+		break;
+	case ZCL_CLUSTER_TELINK_SDK_TEST_REQ:
+		g_afTest_rcvReqCnt++;
+		afTest_testReqPrc(pApsdeInd);
+		break;
+	case ZCL_CLUSTER_TELINK_SDK_TEST_RSP:
 
-			break;
-		default:
-			break;
+		break;
+	default:
+		break;
 	}
 
 	/* Must be free here. */
@@ -137,9 +137,8 @@ void afTest_rx_handler(void *arg)
 
 void afTest_dataSendConfirm(void *arg)
 {
-//	apsdeDataConf_t *pApsDataCnf = (apsdeDataConf_t *)arg;
-
+	//	apsdeDataConf_t *pApsDataCnf = (apsdeDataConf_t *)arg;
 }
 
-#endif	/* AF_TEST_ENABLE */
-#endif  /* __PROJECT_TL_DIMMABLE_LIGHT__ */
+#endif /* AF_TEST_ENABLE */
+#endif /* __PROJECT_TL_DIMMABLE_LIGHT__ */

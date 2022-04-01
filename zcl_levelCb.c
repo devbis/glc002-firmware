@@ -36,24 +36,25 @@
 /**********************************************************************
  * LOCAL CONSTANTS
  */
-#define ZCL_LEVEL_CHANGE_INTERVAL		100
+#define ZCL_LEVEL_CHANGE_INTERVAL 100
 
 /**********************************************************************
  * TYPEDEFS
  */
-typedef struct{
+typedef struct
+{
 	s32 stepLevel256;
-	u16	currentLevel256;
-	u8	withOnOff;
-}zcl_levelInfo_t;
+	u16 currentLevel256;
+	u8 withOnOff;
+} zcl_levelInfo_t;
 
 /**********************************************************************
  * LOCAL VARIABLES
  */
 static zcl_levelInfo_t levelInfo = {
-	.stepLevel256 		= 0,
-	.currentLevel256	= 0,
-	.withOnOff			= 0,
+	.stepLevel256 = 0,
+	.currentLevel256 = 0,
+	.withOnOff = 0,
 };
 
 static ev_timer_event_t *levelTimerEvt = NULL;
@@ -80,7 +81,7 @@ void sampleLight_levelInit(void)
 	levelInfo.currentLevel256 = (u16)(pLevel->curLevel) << 8;
 
 	light_applyUpdate(&pLevel->curLevel, &levelInfo.currentLevel256, &levelInfo.stepLevel256, &pLevel->remainingTime,
-					ZCL_LEVEL_ATTR_MIN_LEVEL, ZCL_LEVEL_ATTR_MAX_LEVEL, FALSE);
+					  ZCL_LEVEL_ATTR_MIN_LEVEL, ZCL_LEVEL_ATTR_MAX_LEVEL, FALSE);
 }
 
 /*********************************************************************
@@ -108,24 +109,30 @@ void sampleLight_updateLevel(void)
  *
  * @return  0: timer continue on; -1: timer will be canceled
  */
-static s32 sampleLight_levelTimerEvtCb(void * arg)
+static s32 sampleLight_levelTimerEvtCb(void *arg)
 {
 	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
 
-	if(pLevel->remainingTime){
+	if (pLevel->remainingTime)
+	{
 		light_applyUpdate(&pLevel->curLevel, &levelInfo.currentLevel256, &levelInfo.stepLevel256, &pLevel->remainingTime,
-								ZCL_LEVEL_ATTR_MIN_LEVEL, ZCL_LEVEL_ATTR_MAX_LEVEL, FALSE);
+						  ZCL_LEVEL_ATTR_MIN_LEVEL, ZCL_LEVEL_ATTR_MAX_LEVEL, FALSE);
 	}
 
-	if(levelInfo.withOnOff){
-		if(pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL){
+	if (levelInfo.withOnOff)
+	{
+		if (pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL)
+		{
 			sampleLight_onoff(ZCL_CMD_ONOFF_OFF);
 		}
 	}
 
-	if(pLevel->remainingTime){
+	if (pLevel->remainingTime)
+	{
 		return 0;
-	}else{
+	}
+	else
+	{
 		levelTimerEvt = NULL;
 		return -1;
 	}
@@ -142,7 +149,8 @@ static s32 sampleLight_levelTimerEvtCb(void * arg)
  */
 static void sampleLight_LevelTimerStop(void)
 {
-	if(levelTimerEvt){
+	if (levelTimerEvt)
+	{
 		TL_ZB_TIMER_CANCEL(&levelTimerEvt);
 	}
 }
@@ -169,20 +177,27 @@ static void sampleLight_moveToLevelProcess(u8 cmdId, moveToLvl_t *cmd)
 	levelInfo.stepLevel256 /= (s32)pLevel->remainingTime;
 
 	light_applyUpdate(&pLevel->curLevel, &levelInfo.currentLevel256, &levelInfo.stepLevel256, &pLevel->remainingTime,
-							ZCL_LEVEL_ATTR_MIN_LEVEL, ZCL_LEVEL_ATTR_MAX_LEVEL, FALSE);
+					  ZCL_LEVEL_ATTR_MIN_LEVEL, ZCL_LEVEL_ATTR_MAX_LEVEL, FALSE);
 
-	if(levelInfo.withOnOff){
-		if(levelInfo.stepLevel256 > 0){
+	if (levelInfo.withOnOff)
+	{
+		if (levelInfo.stepLevel256 > 0)
+		{
 			sampleLight_onoff(ZCL_CMD_ONOFF_ON);
-		}else if(pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL){
+		}
+		else if (pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL)
+		{
 			sampleLight_onoff(ZCL_CMD_ONOFF_OFF);
 		}
 	}
 
-	if(pLevel->remainingTime){
+	if (pLevel->remainingTime)
+	{
 		sampleLight_LevelTimerStop();
 		levelTimerEvt = TL_ZB_TIMER_SCHEDULE(sampleLight_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
-	}else{
+	}
+	else
+	{
 		sampleLight_LevelTimerStop();
 	}
 }
@@ -207,40 +222,51 @@ static void sampleLight_moveProcess(u8 cmdId, move_t *cmd)
 	u32 rate = (u32)cmd->rate * 100;
 	u8 newLevel;
 	u8 deltaLevel;
-	if(cmd->moveMode == LEVEL_MOVE_UP){
+	if (cmd->moveMode == LEVEL_MOVE_UP)
+	{
 		newLevel = ZCL_LEVEL_ATTR_MAX_LEVEL;
 		deltaLevel = ZCL_LEVEL_ATTR_MAX_LEVEL - pLevel->curLevel;
-	}else{
+	}
+	else
+	{
 		newLevel = ZCL_LEVEL_ATTR_MIN_LEVEL;
 		deltaLevel = pLevel->curLevel - ZCL_LEVEL_ATTR_MIN_LEVEL;
 	}
 	pLevel->remainingTime = ((u32)deltaLevel * 1000) / rate;
-	if(pLevel->remainingTime == 0){
+	if (pLevel->remainingTime == 0)
+	{
 		pLevel->remainingTime = 1;
 	}
 
 	levelInfo.stepLevel256 = ((s32)(newLevel - pLevel->curLevel)) << 8;
 	levelInfo.stepLevel256 /= (s32)pLevel->remainingTime;
 
-	if(cmd->moveMode == LEVEL_MOVE_UP){
-		if(levelInfo.withOnOff){
+	if (cmd->moveMode == LEVEL_MOVE_UP)
+	{
+		if (levelInfo.withOnOff)
+		{
 			sampleLight_onoff(ZCL_CMD_ONOFF_ON);
 		}
 	}
 
 	light_applyUpdate(&pLevel->curLevel, &levelInfo.currentLevel256, &levelInfo.stepLevel256, &pLevel->remainingTime,
-							ZCL_LEVEL_ATTR_MIN_LEVEL, ZCL_LEVEL_ATTR_MAX_LEVEL, FALSE);
+					  ZCL_LEVEL_ATTR_MIN_LEVEL, ZCL_LEVEL_ATTR_MAX_LEVEL, FALSE);
 
-	if(levelInfo.withOnOff){
-		if(pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL){
+	if (levelInfo.withOnOff)
+	{
+		if (pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL)
+		{
 			sampleLight_onoff(ZCL_CMD_ONOFF_OFF);
 		}
 	}
 
-	if(pLevel->remainingTime){
+	if (pLevel->remainingTime)
+	{
 		sampleLight_LevelTimerStop();
 		levelTimerEvt = TL_ZB_TIMER_SCHEDULE(sampleLight_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
-	}else{
+	}
+	else
+	{
 		sampleLight_LevelTimerStop();
 	}
 }
@@ -265,27 +291,36 @@ static void sampleLight_stepProcess(u8 cmdId, step_t *cmd)
 	levelInfo.currentLevel256 = (u16)(pLevel->curLevel) << 8;
 	levelInfo.stepLevel256 = (((s32)cmd->stepSize) << 8) / pLevel->remainingTime;
 
-	if(cmd->stepMode == LEVEL_STEP_UP){
-		if(levelInfo.withOnOff){
+	if (cmd->stepMode == LEVEL_STEP_UP)
+	{
+		if (levelInfo.withOnOff)
+		{
 			sampleLight_onoff(ZCL_CMD_ONOFF_ON);
 		}
-	}else{
+	}
+	else
+	{
 		levelInfo.stepLevel256 = -levelInfo.stepLevel256;
 	}
 
 	light_applyUpdate(&pLevel->curLevel, &levelInfo.currentLevel256, &levelInfo.stepLevel256, &pLevel->remainingTime,
-							ZCL_LEVEL_ATTR_MIN_LEVEL, ZCL_LEVEL_ATTR_MAX_LEVEL, FALSE);
+					  ZCL_LEVEL_ATTR_MIN_LEVEL, ZCL_LEVEL_ATTR_MAX_LEVEL, FALSE);
 
-	if(levelInfo.withOnOff){
-		if(pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL){
+	if (levelInfo.withOnOff)
+	{
+		if (pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL)
+		{
 			sampleLight_onoff(ZCL_CMD_ONOFF_OFF);
 		}
 	}
 
-	if(pLevel->remainingTime){
+	if (pLevel->remainingTime)
+	{
 		sampleLight_LevelTimerStop();
 		levelTimerEvt = TL_ZB_TIMER_SCHEDULE(sampleLight_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
-	}else{
+	}
+	else
+	{
 		sampleLight_LevelTimerStop();
 	}
 }
@@ -323,32 +358,34 @@ static void sampleLight_stopProcess(u8 cmdId, stop_t *cmd)
  */
 status_t sampleLight_levelCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload)
 {
-	if(pAddrInfo->dstEp == SAMPLE_LIGHT_ENDPOINT){
-		switch(cmdId){
-			case ZCL_CMD_LEVEL_MOVE_TO_LEVEL:
-			case ZCL_CMD_LEVEL_MOVE_TO_LEVEL_WITH_ON_OFF:
-				sampleLight_moveToLevelProcess(cmdId, (moveToLvl_t *)cmdPayload);
-				break;
-			case ZCL_CMD_LEVEL_MOVE:
-			case ZCL_CMD_LEVEL_MOVE_WITH_ON_OFF:
-				sampleLight_moveProcess(cmdId, (move_t *)cmdPayload);
-				break;
-			case ZCL_CMD_LEVEL_STEP:
-			case ZCL_CMD_LEVEL_STEP_WITH_ON_OFF:
-				sampleLight_stepProcess(cmdId, (step_t *)cmdPayload);
-				break;
-			case ZCL_CMD_LEVEL_STOP:
-			case ZCL_CMD_LEVEL_STOP_WITH_ON_OFF:
-				sampleLight_stopProcess(cmdId, (stop_t *)cmdPayload);
-				break;
-			default:
-				break;
+	if (pAddrInfo->dstEp == SAMPLE_LIGHT_ENDPOINT)
+	{
+		switch (cmdId)
+		{
+		case ZCL_CMD_LEVEL_MOVE_TO_LEVEL:
+		case ZCL_CMD_LEVEL_MOVE_TO_LEVEL_WITH_ON_OFF:
+			sampleLight_moveToLevelProcess(cmdId, (moveToLvl_t *)cmdPayload);
+			break;
+		case ZCL_CMD_LEVEL_MOVE:
+		case ZCL_CMD_LEVEL_MOVE_WITH_ON_OFF:
+			sampleLight_moveProcess(cmdId, (move_t *)cmdPayload);
+			break;
+		case ZCL_CMD_LEVEL_STEP:
+		case ZCL_CMD_LEVEL_STEP_WITH_ON_OFF:
+			sampleLight_stepProcess(cmdId, (step_t *)cmdPayload);
+			break;
+		case ZCL_CMD_LEVEL_STOP:
+		case ZCL_CMD_LEVEL_STOP_WITH_ON_OFF:
+			sampleLight_stopProcess(cmdId, (stop_t *)cmdPayload);
+			break;
+		default:
+			break;
 		}
 	}
 
 	return ZCL_STA_SUCCESS;
 }
 
-#endif	/* ZCL_LEVEL_CTRL */
+#endif /* ZCL_LEVEL_CTRL */
 
-#endif  /* __PROJECT_TL_DIMMABLE_LIGHT__ */
+#endif /* __PROJECT_TL_DIMMABLE_LIGHT__ */

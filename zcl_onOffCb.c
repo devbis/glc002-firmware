@@ -35,7 +35,7 @@
 /**********************************************************************
  * LOCAL CONSTANTS
  */
-#define ZCL_ONOFF_TIMER_INTERVAL		100    //the timer interval to change the offWaitTime/onTime attribute of the ONOFF cluster
+#define ZCL_ONOFF_TIMER_INTERVAL 100 // the timer interval to change the offWaitTime/onTime attribute of the ONOFF cluster
 
 /**********************************************************************
  * LOCAL VARIABLES
@@ -91,25 +91,35 @@ void sampleLight_onoff(u8 cmd)
 {
 	zcl_onOffAttr_t *pOnOff = zcl_onoffAttrGet();
 
-	if(cmd == ZCL_CMD_ONOFF_ON){
+	if (cmd == ZCL_CMD_ONOFF_ON)
+	{
 		pOnOff->globalSceneControl = TRUE;
 
 		pOnOff->onOff = ZCL_ONOFF_STATUS_ON;
-		if(pOnOff->onTime == 0){
+		if (pOnOff->onTime == 0)
+		{
 			pOnOff->offWaitTime = 0;
 		}
-	}else if(cmd == ZCL_CMD_ONOFF_OFF){
+	}
+	else if (cmd == ZCL_CMD_ONOFF_OFF)
+	{
 		pOnOff->onOff = ZCL_ONOFF_STATUS_OFF;
 		pOnOff->onTime = 0;
-	}else{
-		if(pOnOff->onOff == ZCL_ONOFF_STATUS_OFF){
+	}
+	else
+	{
+		if (pOnOff->onOff == ZCL_ONOFF_STATUS_OFF)
+		{
 			pOnOff->globalSceneControl = TRUE;
 
 			pOnOff->onOff = ZCL_ONOFF_STATUS_ON;
-			if(pOnOff->onTime == 0){
+			if (pOnOff->onTime == 0)
+			{
 				pOnOff->offWaitTime = 0;
 			}
-		}else{
+		}
+		else
+		{
 			pOnOff->onOff = ZCL_ONOFF_STATUS_OFF;
 			pOnOff->onTime = 0;
 		}
@@ -136,25 +146,32 @@ static s32 sampleLight_OnWithTimedOffTimerCb(void *arg)
 {
 	zcl_onOffAttr_t *pOnOff = zcl_onoffAttrGet();
 
-	if((pOnOff->onOff == ZCL_ONOFF_STATUS_ON) && pOnOff->onTime){
+	if ((pOnOff->onOff == ZCL_ONOFF_STATUS_ON) && pOnOff->onTime)
+	{
 		pOnOff->onTime--;
-		if(pOnOff->onTime <= 0){
+		if (pOnOff->onTime <= 0)
+		{
 			pOnOff->offWaitTime = 0;
 			sampleLight_onoff(ZCL_CMD_ONOFF_OFF);
 		}
 	}
 
-	if((pOnOff->onOff == ZCL_ONOFF_STATUS_OFF) && pOnOff->offWaitTime){
+	if ((pOnOff->onOff == ZCL_ONOFF_STATUS_OFF) && pOnOff->offWaitTime)
+	{
 		pOnOff->offWaitTime--;
-		if(pOnOff->offWaitTime <= 0){
+		if (pOnOff->offWaitTime <= 0)
+		{
 			onWithTimedOffTimerEvt = NULL;
 			return -1;
 		}
 	}
 
-	if(pOnOff->onTime || pOnOff->offWaitTime){
+	if (pOnOff->onTime || pOnOff->offWaitTime)
+	{
 		return 0;
-	}else{
+	}
+	else
+	{
 		onWithTimedOffTimerEvt = NULL;
 		return -1;
 	}
@@ -171,7 +188,8 @@ static s32 sampleLight_OnWithTimedOffTimerCb(void *arg)
  */
 static void sampleLight_OnWithTimedOffTimerStop(void)
 {
-	if(onWithTimedOffTimerEvt){
+	if (onWithTimedOffTimerEvt)
+	{
 		TL_ZB_TIMER_CANCEL(&onWithTimedOffTimerEvt);
 	}
 }
@@ -189,20 +207,26 @@ static void sampleLight_onoff_onWithTimedOffProcess(zcl_onoff_onWithTimeOffCmd_t
 {
 	zcl_onOffAttr_t *pOnOff = zcl_onoffAttrGet();
 
-	if(cmd->onOffCtrl.bits.acceptOnlyWhenOn && (pOnOff->onOff == ZCL_ONOFF_STATUS_OFF)){
+	if (cmd->onOffCtrl.bits.acceptOnlyWhenOn && (pOnOff->onOff == ZCL_ONOFF_STATUS_OFF))
+	{
 		return;
 	}
 
-	if(pOnOff->offWaitTime && (pOnOff->onOff == ZCL_ONOFF_STATUS_OFF)){
+	if (pOnOff->offWaitTime && (pOnOff->onOff == ZCL_ONOFF_STATUS_OFF))
+	{
 		pOnOff->offWaitTime = min2(pOnOff->offWaitTime, cmd->offWaitTime);
-	}else{
+	}
+	else
+	{
 		pOnOff->onTime = max2(pOnOff->onTime, cmd->onTime);
 		pOnOff->offWaitTime = cmd->offWaitTime;
 		sampleLight_onoff(ZCL_CMD_ONOFF_ON);
 	}
 
-	if((pOnOff->onTime < 0xFFFF) && (pOnOff->offWaitTime < 0xFFFF)){
-		if(pOnOff->onTime || pOnOff->offWaitTime){
+	if ((pOnOff->onTime < 0xFFFF) && (pOnOff->offWaitTime < 0xFFFF))
+	{
+		if (pOnOff->onTime || pOnOff->offWaitTime)
+		{
 			sampleLight_OnWithTimedOffTimerStop();
 			onWithTimedOffTimerEvt = TL_ZB_TIMER_SCHEDULE(sampleLight_OnWithTimedOffTimerCb, NULL, ZCL_ONOFF_TIMER_INTERVAL);
 		}
@@ -220,7 +244,7 @@ static void sampleLight_onoff_onWithTimedOffProcess(zcl_onoff_onWithTimeOffCmd_t
  */
 static void sampleLight_onoff_offWithEffectProcess(zcl_onoff_offWithEffectCmd_t *cmd)
 {
-	//TODO: FIXED ME
+	// TODO: FIXED ME
 
 	sampleLight_onoff(ZCL_CMD_ONOFF_OFF);
 }
@@ -236,7 +260,6 @@ static void sampleLight_onoff_offWithEffectProcess(zcl_onoff_offWithEffectCmd_t 
  */
 static void sampleLight_onoff_onWithRecallGlobalSceneProcess(void)
 {
-
 }
 
 /*********************************************************************
@@ -254,36 +277,40 @@ status_t sampleLight_onOffCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *c
 {
 	zcl_onOffAttr_t *pOnOff = zcl_onoffAttrGet();
 
-	if(pAddrInfo->dstEp == SAMPLE_LIGHT_ENDPOINT){
-		switch(cmdId){
-			case ZCL_CMD_ONOFF_ON:
-			case ZCL_CMD_ONOFF_OFF:
-			case ZCL_CMD_ONOFF_TOGGLE:
-				sampleLight_onoff(cmdId);
-				break;
-			case ZCL_CMD_OFF_WITH_EFFECT:
-				if(pOnOff->globalSceneControl == TRUE){
-					/* TODO: store its settings in its global scene */
+	if (pAddrInfo->dstEp == SAMPLE_LIGHT_ENDPOINT)
+	{
+		switch (cmdId)
+		{
+		case ZCL_CMD_ONOFF_ON:
+		case ZCL_CMD_ONOFF_OFF:
+		case ZCL_CMD_ONOFF_TOGGLE:
+			sampleLight_onoff(cmdId);
+			break;
+		case ZCL_CMD_OFF_WITH_EFFECT:
+			if (pOnOff->globalSceneControl == TRUE)
+			{
+				/* TODO: store its settings in its global scene */
 
-					pOnOff->globalSceneControl = FALSE;
-				}
-				sampleLight_onoff_offWithEffectProcess((zcl_onoff_offWithEffectCmd_t *)cmdPayload);
-				break;
-			case ZCL_CMD_ON_WITH_RECALL_GLOBAL_SCENE:
-				if(pOnOff->globalSceneControl == FALSE){
-					sampleLight_onoff_onWithRecallGlobalSceneProcess();
-					pOnOff->globalSceneControl = TRUE;
-				}
-				break;
-			case ZCL_CMD_ON_WITH_TIMED_OFF:
-				sampleLight_onoff_onWithTimedOffProcess((zcl_onoff_onWithTimeOffCmd_t *)cmdPayload);
-				break;
-			default:
-				break;
+				pOnOff->globalSceneControl = FALSE;
+			}
+			sampleLight_onoff_offWithEffectProcess((zcl_onoff_offWithEffectCmd_t *)cmdPayload);
+			break;
+		case ZCL_CMD_ON_WITH_RECALL_GLOBAL_SCENE:
+			if (pOnOff->globalSceneControl == FALSE)
+			{
+				sampleLight_onoff_onWithRecallGlobalSceneProcess();
+				pOnOff->globalSceneControl = TRUE;
+			}
+			break;
+		case ZCL_CMD_ON_WITH_TIMED_OFF:
+			sampleLight_onoff_onWithTimedOffProcess((zcl_onoff_onWithTimeOffCmd_t *)cmdPayload);
+			break;
+		default:
+			break;
 		}
 	}
 
 	return ZCL_STA_SUCCESS;
 }
 
-#endif  /* __PROJECT_TL_DIMMABLE_LIGHT__ */
+#endif /* __PROJECT_TL_DIMMABLE_LIGHT__ */

@@ -24,11 +24,9 @@
 #ifndef _SAMPLE_LIGHT_CTRL_H_
 #define _SAMPLE_LIGHT_CTRL_H_
 
-
 /**********************************************************************
  * CONSTANT
  */
-
 
 /**********************************************************************
  * FUNCTIONS
@@ -49,4 +47,4 @@ void light_applyUpdate_16(u16 *curLevel, u32 *curLevel256, s32 *stepLevel256, u1
 void light_blink_start(u8 times, u16 ledOnTime, u16 ledOffTime);
 void light_blink_stop(void);
 
-#endif	/* _SAMPLE_LIGHT_CTRL_H_ */
+#endif /* _SAMPLE_LIGHT_CTRL_H_ */

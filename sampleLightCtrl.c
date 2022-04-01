@@ -30,25 +30,22 @@
 #include "zcl_include.h"
 #include "sampleLight.h"
 #include "sampleLightCtrl.h"
-#include<math.h>
+#include <math.h>
 
 /**********************************************************************
  * LOCAL CONSTANTS
  */
-#define PWM_FREQUENCY					1000	//1KHz
-#define PWM_FULL_DUTYCYCLE				100
-#define PMW_MAX_TICK		            (PWM_CLOCK_SOURCE / PWM_FREQUENCY)
-
+#define PWM_FREQUENCY 1000 // 1KHz
+#define PWM_FULL_DUTYCYCLE 100
+#define PMW_MAX_TICK (PWM_CLOCK_SOURCE / PWM_FREQUENCY)
 
 /**********************************************************************
  * TYPEDEFS
  */
 
-
 /**********************************************************************
  * GLOBAL VARIABLES
  */
-
 
 /**********************************************************************
  * FUNCTIONS
@@ -132,13 +129,16 @@ void hwLight_init(void)
  */
 void hwLight_onOffUpdate(u8 onOff)
 {
-	if(onOff){
+	if (onOff)
+	{
 		drv_pwm_start(R_LIGHT_PWM_CHANNEL);
 		drv_pwm_start(G_LIGHT_PWM_CHANNEL);
 		drv_pwm_start(B_LIGHT_PWM_CHANNEL);
 		drv_pwm_start(COOL_LIGHT_PWM_CHANNEL);
 		drv_pwm_start(WARM_LIGHT_PWM_CHANNEL);
-	}else{
+	}
+	else
+	{
 		drv_pwm_stop(R_LIGHT_PWM_CHANNEL);
 		drv_pwm_stop(G_LIGHT_PWM_CHANNEL);
 		drv_pwm_stop(B_LIGHT_PWM_CHANNEL);
@@ -146,7 +146,6 @@ void hwLight_onOffUpdate(u8 onOff)
 		drv_pwm_stop(WARM_LIGHT_PWM_CHANNEL);
 	}
 }
-
 
 /*********************************************************************
  * @fn      hwLight_levelUpdate
@@ -234,58 +233,73 @@ void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
  */
 void hsvToRGB(u8 hue, u8 saturation, u8 level, u8 *R, u8 *G, u8 *B)
 {
-    u8 region;
-    u8 remainder;
-    u8 p, q, t;
+	u8 region;
+	u8 remainder;
+	u8 p, q, t;
 
 	u16 rHue = (u16)hue * 360 / ZCL_COLOR_ATTR_HUE_MAX;
 	u8 rS = saturation;
 	u8 rV = level;
 
-	if(saturation == 0){
+	if (saturation == 0)
+	{
 		*R = rV;
 		*G = rV;
 		*B = rV;
 		return;
 	}
 
-	if(rHue < 360){
+	if (rHue < 360)
+	{
 		region = rHue / 60;
-	}else{
+	}
+	else
+	{
 		region = 0;
 	}
 
 	remainder = (rHue - (region * 60)) * 4;
 
-    p = (rV * (255 - rS)) >> 8;
-    q = (rV * (255 - ((rS * remainder) >> 8))) >> 8;
-    t = (rV * (255 - ((rS * (255 - remainder)) >> 8))) >> 8;
+	p = (rV * (255 - rS)) >> 8;
+	q = (rV * (255 - ((rS * remainder) >> 8))) >> 8;
+	t = (rV * (255 - ((rS * (255 - remainder)) >> 8))) >> 8;
 
-    if (region == 0) {
-    	*R = rV;
-    	*G = t;
-    	*B = p;
-    } else if (region == 1) {
-    	*R = q;
-    	*G = rV;
-    	*B = p;
-    } else if (region == 2) {
-    	*R = p;
-    	*G = rV;
-    	*B = t;
-    } else if (region == 3) {
-    	*R = p;
-    	*G = q;
-    	*B = rV;
-    } else if (region == 4) {
-    	*R = t;
-    	*G = p;
-    	*B = rV;
-    } else {
-    	*R = rV;
-    	*G = p;
-    	*B = q;
-    }
+	if (region == 0)
+	{
+		*R = rV;
+		*G = t;
+		*B = p;
+	}
+	else if (region == 1)
+	{
+		*R = q;
+		*G = rV;
+		*B = p;
+	}
+	else if (region == 2)
+	{
+		*R = p;
+		*G = rV;
+		*B = t;
+	}
+	else if (region == 3)
+	{
+		*R = p;
+		*G = q;
+		*B = rV;
+	}
+	else if (region == 4)
+	{
+		*R = t;
+		*G = p;
+		*B = rV;
+	}
+	else
+	{
+		*R = rV;
+		*G = p;
+		*B = q;
+	}
 }
 
 /*********************************************************************
@@ -309,10 +323,11 @@ void hwLight_colorUpdate_HSV2RGB(u8 hue, u8 saturation, u8 level)
 
 	hsvToRGB(hue, saturation, level, &R, &G, &B);
 
-	hwLight_colorUpdate_RGB(R,G,B);
+	hwLight_colorUpdate_RGB(R, G, B);
 }
 
-void hwLight_colorUpdate_RGB(u8 R, u8 G, u8 B) {
+void hwLight_colorUpdate_RGB(u8 R, u8 G, u8 B)
+{
 	u16 gammaCorrectR = ((u16)R * R) / ZCL_LEVEL_ATTR_MAX_LEVEL;
 	u16 gammaCorrectG = ((u16)G * G) / ZCL_LEVEL_ATTR_MAX_LEVEL;
 	u16 gammaCorrectB = ((u16)B * B) / ZCL_LEVEL_ATTR_MAX_LEVEL;
@@ -324,36 +339,40 @@ void hwLight_colorUpdate_RGB(u8 R, u8 G, u8 B) {
 	pwmSetDuty(WARM_LIGHT_PWM_CHANNEL, 0);
 }
 
-static float ENFORCE_BOUNDS_FLOAT(float lowerBound, float num, float upperBound) {
-		return num < lowerBound ? lowerBound : num > upperBound ? upperBound : num;
+static float ENFORCE_BOUNDS_FLOAT(float lowerBound, float num, float upperBound)
+{
+	return num < lowerBound ? lowerBound : num > upperBound ? upperBound
+															: num;
 }
 
-float LINEAR_TO_SRGB_GAMMA_CORRECTION(const float part) {
-		return part <= 0.0031308 ? 12.92 * part : 1.055 * pow(part, 1.0 / 2.4) - 0.055;
+float LINEAR_TO_SRGB_GAMMA_CORRECTION(const float part)
+{
+	return part <= 0.0031308 ? 12.92 * part : 1.055 * pow(part, 1.0 / 2.4) - 0.055;
 }
 
-void hwLight_colorUpdate_XY2RGB(u16 xI, u16 yI, u8 level) {
-		float x = xI / 65536.f;
-		float y = yI / 65536.f;
+void hwLight_colorUpdate_XY2RGB(u16 xI, u16 yI, u8 level)
+{
+	float x = xI / 65536.f;
+	float y = yI / 65536.f;
 
-		// This does not locate the closest point in the gamma spectrum of the lamps. possible #todo
-		const float z = 1 - x - y;
+	// This does not locate the closest point in the gamma spectrum of the lamps. possible #todo
+	const float z = 1 - x - y;
 
-		const float Y = level / ZCL_LEVEL_ATTR_MAX_LEVEL; // This is luminance, but used as brightness
-		const float X = ((Y) / y) * x;
-		const float Z = ((Y) / y) * z;
+	const float Y = level / ZCL_LEVEL_ATTR_MAX_LEVEL; // This is luminance, but used as brightness
+	const float X = ((Y) / y) * x;
+	const float Z = ((Y) / y) * z;
 
-		// D65 BT.709 conversion https://en.wikipedia.org/wiki/SRGB
-		float r = X * 1.656492 - Y * 0.354851 - Z * 0.255038;
-		float g = -X * 0.707196 + Y * 1.655397 + Z * 0.036152;
-		float b = X * 0.051713 - Y * 0.121364 + Z * 1.011530;
+	// D65 BT.709 conversion https://en.wikipedia.org/wiki/SRGB
+	float r = X * 1.656492 - Y * 0.354851 - Z * 0.255038;
+	float g = -X * 0.707196 + Y * 1.655397 + Z * 0.036152;
+	float b = X * 0.051713 - Y * 0.121364 + Z * 1.011530;
 
-		// Enforce the lower and upper bounds
-		r = ENFORCE_BOUNDS_FLOAT(0.0, r * 255, 255.0);
-		g = ENFORCE_BOUNDS_FLOAT(0.0, g * 255, 255.0);
-		b = ENFORCE_BOUNDS_FLOAT(0.0, b * 255, 255.0);
+	// Enforce the lower and upper bounds
+	r = ENFORCE_BOUNDS_FLOAT(0.0, r * 255, 255.0);
+	g = ENFORCE_BOUNDS_FLOAT(0.0, g * 255, 255.0);
+	b = ENFORCE_BOUNDS_FLOAT(0.0, b * 255, 255.0);
 
-		hwLight_colorUpdate_RGB((u8)r,(u8)g,(u8)b);
+	hwLight_colorUpdate_RGB((u8)r, (u8)g, (u8)b);
 }
 
 /*********************************************************************
@@ -413,27 +432,38 @@ void light_fresh(void)
  */
 void light_applyUpdate(u8 *curLevel, u16 *curLevel256, s32 *stepLevel256, u16 *remainingTime, u8 minLevel, u8 maxLevel, bool wrap)
 {
-	if((*stepLevel256 > 0) && ((((s32)*curLevel256 + *stepLevel256) / 256) > maxLevel)){
+	if ((*stepLevel256 > 0) && ((((s32)*curLevel256 + *stepLevel256) / 256) > maxLevel))
+	{
 		*curLevel256 = (wrap) ? ((u16)minLevel * 256 + ((*curLevel256 + *stepLevel256) - (u16)maxLevel * 256) - 256)
 							  : ((u16)maxLevel * 256);
-	}else if((*stepLevel256 < 0) && ((((s32)*curLevel256 + *stepLevel256) / 256) < minLevel)){
+	}
+	else if ((*stepLevel256 < 0) && ((((s32)*curLevel256 + *stepLevel256) / 256) < minLevel))
+	{
 		*curLevel256 = (wrap) ? ((u16)maxLevel * 256 - ((u16)minLevel * 256 - ((s32)*curLevel256 + *stepLevel256)) + 256)
 							  : ((u16)minLevel * 256);
-	}else{
+	}
+	else
+	{
 		*curLevel256 += *stepLevel256;
 	}
 
-	if(*stepLevel256 > 0){
+	if (*stepLevel256 > 0)
+	{
 		*curLevel = (*curLevel256 + 127) / 256;
-	}else{
+	}
+	else
+	{
 		*curLevel = *curLevel256 / 256;
 	}
 
-	if(*remainingTime == 0){
+	if (*remainingTime == 0)
+	{
 		*curLevel256 = ((u16)*curLevel) * 256;
 		*stepLevel256 = 0;
-	}else if(*remainingTime != 0xFFFF){
-		*remainingTime = *remainingTime -1;
+	}
+	else if (*remainingTime != 0xFFFF)
+	{
+		*remainingTime = *remainingTime - 1;
 	}
 
 	light_fresh();
@@ -450,27 +480,38 @@ void light_applyUpdate(u8 *curLevel, u16 *curLevel256, s32 *stepLevel256, u16 *r
  */
 void light_applyUpdate_16(u16 *curLevel, u32 *curLevel256, s32 *stepLevel256, u16 *remainingTime, u16 minLevel, u16 maxLevel, bool wrap)
 {
-	if((*stepLevel256 > 0) && ((((s32)*curLevel256 + *stepLevel256) / 256) > maxLevel)){
+	if ((*stepLevel256 > 0) && ((((s32)*curLevel256 + *stepLevel256) / 256) > maxLevel))
+	{
 		*curLevel256 = (wrap) ? ((u32)minLevel * 256 + ((*curLevel256 + *stepLevel256) - (u32)maxLevel * 256) - 256)
 							  : ((u32)maxLevel * 256);
-	}else if((*stepLevel256 < 0) && ((((s32)*curLevel256 + *stepLevel256) / 256) < minLevel)){
+	}
+	else if ((*stepLevel256 < 0) && ((((s32)*curLevel256 + *stepLevel256) / 256) < minLevel))
+	{
 		*curLevel256 = (wrap) ? ((u32)maxLevel * 256 - ((u32)minLevel * 256 - ((s32)*curLevel256 + *stepLevel256)) + 256)
 							  : ((u32)minLevel * 256);
-	}else{
+	}
+	else
+	{
 		*curLevel256 += *stepLevel256;
 	}
 
-	if(*stepLevel256 > 0){
+	if (*stepLevel256 > 0)
+	{
 		*curLevel = (*curLevel256 + 127) / 256;
-	}else{
+	}
+	else
+	{
 		*curLevel = *curLevel256 / 256;
 	}
 
-	if(*remainingTime == 0){
+	if (*remainingTime == 0)
+	{
 		*curLevel256 = ((u32)*curLevel) * 256;
 		*stepLevel256 = 0;
-	}else if(*remainingTime != 0xFFFF){
-		*remainingTime = *remainingTime -1;
+	}
+	else if (*remainingTime != 0xFFFF)
+	{
+		*remainingTime = *remainingTime - 1;
 	}
 
 	light_fresh();
@@ -489,13 +530,19 @@ s32 light_blink_TimerEvtCb(void *arg)
 {
 	u32 interval = 0;
 
-	if(gLightCtx.sta == gLightCtx.oriSta){
-		if(gLightCtx.times){
+	if (gLightCtx.sta == gLightCtx.oriSta)
+	{
+		if (gLightCtx.times)
+		{
 			gLightCtx.times--;
-			if(gLightCtx.times <= 0){
-				if(gLightCtx.oriSta){
+			if (gLightCtx.times <= 0)
+			{
+				if (gLightCtx.oriSta)
+				{
 					hwLight_onOffUpdate(ZCL_CMD_ONOFF_ON);
-				}else{
+				}
+				else
+				{
 					hwLight_onOffUpdate(ZCL_CMD_ONOFF_OFF);
 				}
 
@@ -506,10 +553,13 @@ s32 light_blink_TimerEvtCb(void *arg)
 	}
 
 	gLightCtx.sta = !gLightCtx.sta;
-	if(gLightCtx.sta){
+	if (gLightCtx.sta)
+	{
 		hwLight_onOffUpdate(ZCL_CMD_ONOFF_ON);
 		interval = gLightCtx.ledOnTime;
-	}else{
+	}
+	else
+	{
 		hwLight_onOffUpdate(ZCL_CMD_ONOFF_OFF);
 		interval = gLightCtx.ledOffTime;
 	}
@@ -536,12 +586,16 @@ void light_blink_start(u8 times, u16 ledOnTime, u16 ledOffTime)
 	gLightCtx.oriSta = pOnoff->onOff;
 	gLightCtx.times = times;
 
-	if(!gLightCtx.timerLedEvt){
-		if(gLightCtx.oriSta){
+	if (!gLightCtx.timerLedEvt)
+	{
+		if (gLightCtx.oriSta)
+		{
 			hwLight_onOffUpdate(ZCL_CMD_ONOFF_OFF);
 			gLightCtx.sta = 0;
 			interval = ledOffTime;
-		}else{
+		}
+		else
+		{
 			hwLight_onOffUpdate(ZCL_CMD_ONOFF_ON);
 			gLightCtx.sta = 1;
 			interval = ledOnTime;
@@ -564,16 +618,20 @@ void light_blink_start(u8 times, u16 ledOnTime, u16 ledOffTime)
  */
 void light_blink_stop(void)
 {
-	if(gLightCtx.timerLedEvt){
+	if (gLightCtx.timerLedEvt)
+	{
 		TL_ZB_TIMER_CANCEL(&gLightCtx.timerLedEvt);
 
 		gLightCtx.times = 0;
-		if(gLightCtx.oriSta){
+		if (gLightCtx.oriSta)
+		{
 			hwLight_onOffUpdate(ZCL_CMD_ONOFF_ON);
-		}else{
+		}
+		else
+		{
 			hwLight_onOffUpdate(ZCL_CMD_ONOFF_OFF);
 		}
 	}
 }
 
-#endif	/* __PROJECT_TL_DIMMABLE_LIGHT__ */
+#endif /* __PROJECT_TL_DIMMABLE_LIGHT__ */
