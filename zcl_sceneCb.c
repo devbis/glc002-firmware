@@ -60,14 +60,11 @@ static void sampleLight_sceneRecallReqHandler(zclIncomingAddrInfo_t *pAddrInfo, 
 #endif
 
 #ifdef ZCL_LIGHT_COLOR_CONTROL
-#if COLOR_RGB_SUPPORT
-	u8 hue = pScene->extField[extLen+3];
-	u8 saturation = pScene->extField[extLen+4];
-	extLen += 5;
-#elif COLOR_CCT_SUPPORT
-	u16 colorTemperatureMireds = BUILD_U16(pScene->extField[extLen+3], pScene->extField[extLen+4]);
-	extLen += 5;
-#endif
+	u8 colorMode  = pScene->extField[extLen+3];
+	u8 hue = pScene->extField[extLen+4];
+	u8 saturation = pScene->extField[extLen+5];
+	u16 colorTemperatureMireds = BUILD_U16(pScene->extField[extLen+6], pScene->extField[extLen+7]);
+	extLen += 8;
 #endif
 
 #ifdef ZCL_LEVEL_CTRL
@@ -80,22 +77,22 @@ static void sampleLight_sceneRecallReqHandler(zclIncomingAddrInfo_t *pAddrInfo, 
 #endif
 
 #ifdef ZCL_LIGHT_COLOR_CONTROL
-#if COLOR_RGB_SUPPORT
-	zcl_colorCtrlMoveToHueAndSaturationCmd_t move2HueAndSat;
-	move2HueAndSat.hue = hue;
-	move2HueAndSat.saturation = saturation;
-	move2HueAndSat.transitionTime = pScene->transTime;
-	move2HueAndSat.optPresent = 0;
+	if (colorMode == ZCL_COLOR_MODE_CURRENT_HUE_SATURATION) {
+		zcl_colorCtrlMoveToColorTemperatureCmd_t move2ColorTemp;
+		move2ColorTemp.colorTemperature = colorTemperatureMireds;
+		move2ColorTemp.transitionTime = pScene->transTime;
+		move2ColorTemp.optPresent = 0;
 
-	sampleLight_colorCtrlCb(pAddrInfo, ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_HUE_AND_SATURATION, &move2HueAndSat);
-#elif COLOR_CCT_SUPPORT
-	zcl_colorCtrlMoveToColorTemperatureCmd_t move2ColorTemp;
-	move2ColorTemp.colorTemperature = colorTemperatureMireds;
-	move2ColorTemp.transitionTime = pScene->transTime;
-	move2ColorTemp.optPresent = 0;
+		sampleLight_colorCtrlCb(pAddrInfo, ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_COLOR_TEMPERATURE, &move2ColorTemp);
+	} else {
+		zcl_colorCtrlMoveToHueAndSaturationCmd_t move2HueAndSat;
+		move2HueAndSat.hue = hue;
+		move2HueAndSat.saturation = saturation;
+		move2HueAndSat.transitionTime = pScene->transTime;
+		move2HueAndSat.optPresent = 0;
 
-	sampleLight_colorCtrlCb(pAddrInfo, ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_COLOR_TEMPERATURE, &move2ColorTemp);
-#endif
+		sampleLight_colorCtrlCb(pAddrInfo, ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_HUE_AND_SATURATION, &move2HueAndSat);
+	}
 #endif
 }
 
@@ -137,15 +134,12 @@ static void sampleLight_sceneStoreReqHandler(zcl_sceneEntry_t *pScene)
 
 	pScene->extField[extLen++] = LO_UINT16(ZCL_CLUSTER_LIGHTING_COLOR_CONTROL);
 	pScene->extField[extLen++] = HI_UINT16(ZCL_CLUSTER_LIGHTING_COLOR_CONTROL);
-#if COLOR_RGB_SUPPORT
-	pScene->extField[extLen++] = 2;
+	pScene->extField[extLen++] = 5;
+	pScene->extField[extLen++] = pColor->colorMode;
 	pScene->extField[extLen++] = pColor->currentHue;
 	pScene->extField[extLen++] = pColor->currentSaturation;
-#elif COLOR_CCT_SUPPORT
-	pScene->extField[extLen++] = 2;
 	pScene->extField[extLen++] = LO_UINT16(pColor->colorTemperatureMireds);
 	pScene->extField[extLen++] = HI_UINT16(pColor->colorTemperatureMireds);
-#endif
 #endif
 
 	pScene->extFieldLen = extLen;

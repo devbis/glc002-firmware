@@ -44,7 +44,6 @@
  * TYPEDEFS
  */
 typedef struct{
-#if COLOR_RGB_SUPPORT
 	s32 stepHue256;
 	u16	currentHue256;
 	u16	hueRemainingTime;
@@ -53,20 +52,17 @@ typedef struct{
 	u16 currentSaturation256;
 	u16 saturationRemainingTime;
 	
-#elif COLOR_CCT_SUPPORT
 	s32 stepColorTemp256;
 	u32	currentColorTemp256;
 	u16	colorTempRemainingTime;
 	u16	colorTempMinMireds;
 	u16	colorTempMaxMireds;
-#endif
 }zcl_colorInfo_t;
 
 /**********************************************************************
  * LOCAL VARIABLES
  */
 static zcl_colorInfo_t colorInfo = {
-#if COLOR_RGB_SUPPORT
 	.stepHue256 				= 0,
 	.currentHue256				= 0,
 	.hueRemainingTime			= 0,
@@ -75,19 +71,15 @@ static zcl_colorInfo_t colorInfo = {
 	.currentSaturation256		= 0,
 	.saturationRemainingTime	= 0,
 	
-#elif COLOR_CCT_SUPPORT
 	.stepColorTemp256			= 0,
 	.currentColorTemp256		= 0,
 	.colorTempRemainingTime		= 0,
 	.colorTempMinMireds			= 0,
 	.colorTempMaxMireds			= 0,
-#endif
 };
 
 static ev_timer_event_t *colorTimerEvt = NULL;
-#if COLOR_RGB_SUPPORT
 static ev_timer_event_t *colorLoopTimerEvt = NULL;
-#endif
 
 
 /**********************************************************************
@@ -109,33 +101,23 @@ void sampleLight_colorInit(void)
 {
 	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 
-#if COLOR_RGB_SUPPORT
-	pColor->colorCapabilities = ZCL_COLOR_CAPABILITIES_BIT_HUE_SATURATION;
-	pColor->colorMode = ZCL_COLOR_MODE_CURRENT_HUE_SATURATION;
-	pColor->enhancedColorMode = ZCL_COLOR_MODE_CURRENT_HUE_SATURATION;
+	pColor->colorCapabilities = ZCL_COLOR_CAPABILITIES_BIT_HUE_SATURATION | ZCL_COLOR_CAPABILITIES_BIT_COLOR_TEMPERATURE | ZCL_COLOR_CAPABILITIES_BIT_X_Y_ATTRIBUTES;
 
 	colorInfo.currentHue256 = (u16)(pColor->currentHue) << 8;
 	colorInfo.currentSaturation256 = (u16)(pColor->currentSaturation) << 8;
+	colorInfo.currentColorTemp256 = (u32)(pColor->colorTemperatureMireds) << 8;
 
 	colorInfo.hueRemainingTime = 0;
 	colorInfo.saturationRemainingTime = 0;
+	colorInfo.colorTempRemainingTime = 0;
 
-	light_applyUpdate(&pColor->currentHue, &colorInfo.currentHue256, &colorInfo.stepHue256, &colorInfo.hueRemainingTime,
-						ZCL_COLOR_ATTR_HUE_MIN, ZCL_COLOR_ATTR_HUE_MAX, TRUE);
-
-	light_applyUpdate(&pColor->currentSaturation, &colorInfo.currentSaturation256, &colorInfo.stepSaturation256, &colorInfo.saturationRemainingTime,
-						ZCL_COLOR_ATTR_SATURATION_MIN, ZCL_COLOR_ATTR_SATURATION_MAX, FALSE);
-#elif COLOR_CCT_SUPPORT
-	pColor->colorCapabilities = ZCL_COLOR_CAPABILITIES_BIT_COLOR_TEMPERATURE;
+	// Startup is only defined for color temperature, so why would we load any colors here ...
 	pColor->colorMode = ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS;
 	pColor->enhancedColorMode = ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS;
 
-	colorInfo.currentColorTemp256 = (u32)(pColor->colorTemperatureMireds) << 8;
-	colorInfo.colorTempRemainingTime = 0;
-
 	light_applyUpdate_16(&pColor->colorTemperatureMireds, &colorInfo.currentColorTemp256, &colorInfo.stepColorTemp256, &colorInfo.colorTempRemainingTime,
-							pColor->colorTempPhysicalMinMireds, pColor->colorTempPhysicalMaxMireds, FALSE);
-#endif
+								pColor->colorTempPhysicalMinMireds, pColor->colorTempPhysicalMaxMireds, FALSE);
+	
 }
 
 /*********************************************************************
@@ -179,11 +161,13 @@ void sampleLight_updateColor(void)
 	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
 
-#if COLOR_RGB_SUPPORT
-	hwLight_colorUpdate_HSV2RGB(pColor->currentHue, pColor->currentSaturation, pLevel->curLevel);
-#elif COLOR_CCT_SUPPORT
-	hwLight_colorUpdate_colorTemperature(pColor->colorTemperatureMireds, pLevel->curLevel);
-#endif
+	if(pColor->colorMode == ZCL_COLOR_MODE_CURRENT_X_Y) {
+		hwLight_colorUpdate_XY2RGB(pColor->currentX, pColor->currentY, pLevel->curLevel);
+	} else if(pColor->colorMode == ZCL_COLOR_MODE_CURRENT_HUE_SATURATION || pColor->enhancedColorMode == ZCL_ENHANCED_COLOR_MODE_CURRENT_HUE_SATURATION){
+		hwLight_colorUpdate_HSV2RGB(pColor->currentHue, pColor->currentSaturation, pLevel->curLevel);
+	} else if(pColor->colorMode == ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS){
+		hwLight_colorUpdate_colorTemperature(pColor->colorTemperatureMireds, pLevel->curLevel);
+	}
 }
 
 /*********************************************************************
@@ -199,7 +183,6 @@ static s32 sampleLight_colorTimerEvtCb(void *arg)
 {
 	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 
-#if COLOR_RGB_SUPPORT
 	if( (pColor->enhancedColorMode == ZCL_COLOR_MODE_CURRENT_HUE_SATURATION) ||
 		(pColor->enhancedColorMode == ZCL_ENHANCED_COLOR_MODE_CURRENT_HUE_SATURATION) ){
 		if(colorInfo.saturationRemainingTime){
@@ -212,20 +195,14 @@ static s32 sampleLight_colorTimerEvtCb(void *arg)
 									ZCL_COLOR_ATTR_HUE_MIN, ZCL_COLOR_ATTR_HUE_MAX, TRUE);
 		}
 	}
-#elif COLOR_CCT_SUPPORT
-	if(pColor->enhancedColorMode == ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS){
+	else if(pColor->enhancedColorMode == ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS){
 		if(colorInfo.colorTempRemainingTime){
 			light_applyUpdate_16(&pColor->colorTemperatureMireds, &colorInfo.currentColorTemp256, &colorInfo.stepColorTemp256, &colorInfo.colorTempRemainingTime,
 									colorInfo.colorTempMinMireds, colorInfo.colorTempMaxMireds, FALSE);
 		}
 	}
-#endif
 
-#if COLOR_RGB_SUPPORT
-	if(colorInfo.saturationRemainingTime || colorInfo.hueRemainingTime){
-#elif COLOR_CCT_SUPPORT
-	if(colorInfo.colorTempRemainingTime){
-#endif
+	if(colorInfo.saturationRemainingTime || colorInfo.hueRemainingTime || colorInfo.colorTempRemainingTime){
 		return 0;
 	}else{
 		colorTimerEvt = NULL;
@@ -249,7 +226,6 @@ static void sampleLight_colorTimerStop(void)
 	}
 }
 
-#if COLOR_RGB_SUPPORT
 /*********************************************************************
  * @fn      sampleLight_colorLoopTimerEvtCb
  *
@@ -826,8 +802,6 @@ static void sampleLight_colorLoopSetProcess(zcl_colorCtrlColorLoopSetCmd_t *cmd)
 	}
 }
 
-#elif COLOR_CCT_SUPPORT
-
 /*********************************************************************
  * @fn      sampleLight_moveToColorTemperatureProcess
  *
@@ -988,7 +962,6 @@ static void sampleLight_stepColorTemperatureProcess(zcl_colorCtrlStepColorTemper
 	}
 }
 
-#endif
 
 /*********************************************************************
  * @fn      sampleLight_stopMoveStepProcess
@@ -1003,12 +976,9 @@ static void sampleLight_stopMoveStepProcess(void)
 {
 	//zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 
-#if COLOR_RGB_SUPPORT
 	colorInfo.hueRemainingTime = 0;
 	colorInfo.saturationRemainingTime = 0;
-#elif COLOR_CCT_SUPPORT
 	colorInfo.colorTempRemainingTime = 0;
-#endif
 
 	sampleLight_colorTimerStop();
 }
@@ -1028,7 +998,6 @@ status_t sampleLight_colorCtrlCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, voi
 {
 	if(pAddrInfo->dstEp == SAMPLE_LIGHT_ENDPOINT){
 		switch(cmdId){
-#if COLOR_RGB_SUPPORT
 			case ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_HUE:
 				sampleLight_moveToHueProcess((zcl_colorCtrlMoveToHueCmd_t *)cmdPayload);
 				break;
@@ -1074,7 +1043,6 @@ status_t sampleLight_colorCtrlCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, voi
 			case ZCL_CMD_LIGHT_COLOR_CONTROL_COLOR_LOOP_SET:
 				sampleLight_colorLoopSetProcess((zcl_colorCtrlColorLoopSetCmd_t *)cmdPayload);
 				break;
-#elif COLOR_CCT_SUPPORT
 			case ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_COLOR_TEMPERATURE:
 				sampleLight_moveToColorTemperatureProcess((zcl_colorCtrlMoveToColorTemperatureCmd_t *)cmdPayload);
 				break;
@@ -1084,7 +1052,6 @@ status_t sampleLight_colorCtrlCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, voi
 			case ZCL_CMD_LIGHT_COLOR_CONTROL_STEP_COLOR_TEMPERATURE:
 				sampleLight_stepColorTemperatureProcess((zcl_colorCtrlStepColorTemperatureCmd_t *)cmdPayload);
 				break;
-#endif
 			case ZCL_CMD_LIGHT_COLOR_CONTROL_STOP_MOVE_STEP:
 				sampleLight_stopMoveStepProcess();
 				break;

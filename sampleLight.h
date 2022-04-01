@@ -127,20 +127,20 @@ typedef struct{
 	u8	enhancedColorMode;
 	u8	numOfPrimaries;
 	u16 colorCapabilities;
-#if COLOR_RGB_SUPPORT
 	u8	currentHue;
 	u8	currentSaturation;
+	u16 currentX;
+	u16 currentY;
+	u16	enhancedCurrentHue;
 	u8	colorLoopActive;
 	u8	colorLoopDirection;
 	u16	colorLoopTime;
 	u16 colorLoopStartEnhancedHue;
 	u16 colorLoopStoredEnhancedHue;
-#elif COLOR_CCT_SUPPORT
 	u16 colorTemperatureMireds;
 	u16 colorTempPhysicalMinMireds;
 	u16 colorTempPhysicalMaxMireds;
 	u16 startUpColorTemperatureMireds;
-#endif
 }zcl_lightColorCtrlAttr_t;
 
 /**
@@ -163,13 +163,10 @@ typedef struct {
  *  @brief Defined for saving color control attributes
  */
 typedef struct {
-#if COLOR_RGB_SUPPORT
 	u8	currentHue;
 	u8	currentSaturation;
-#elif COLOR_CCT_SUPPORT
 	u16	colorTemperatureMireds;
 	u16	startUpColorTemperatureMireds;
-#endif
 }zcl_nv_colorCtrl_t;
 
 /**********************************************************************

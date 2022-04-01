@@ -30,7 +30,7 @@
 #include "zcl_include.h"
 #include "sampleLight.h"
 #include "sampleLightCtrl.h"
-
+#include<math.h>
 
 /**********************************************************************
  * LOCAL CONSTANTS
@@ -107,21 +107,18 @@ void hwLight_init(void)
 {
 	drv_pwm_init();
 
-#if COLOR_RGB_SUPPORT
 	R_LIGHT_PWM_SET();
 	G_LIGHT_PWM_SET();
 	B_LIGHT_PWM_SET();
+
+	COOL_LIGHT_PWM_SET();
+	WARM_LIGHT_PWM_SET();
+
 	pwmInit(R_LIGHT_PWM_CHANNEL, 0);
 	pwmInit(G_LIGHT_PWM_CHANNEL, 0);
 	pwmInit(B_LIGHT_PWM_CHANNEL, 0);
-#else
-	COOL_LIGHT_PWM_SET();
 	pwmInit(COOL_LIGHT_PWM_CHANNEL, 0);
-#if COLOR_CCT_SUPPORT
-	WARM_LIGHT_PWM_SET();
 	pwmInit(WARM_LIGHT_PWM_CHANNEL, 0);
-#endif
-#endif
 }
 
 /*********************************************************************
@@ -136,29 +133,20 @@ void hwLight_init(void)
 void hwLight_onOffUpdate(u8 onOff)
 {
 	if(onOff){
-#if COLOR_RGB_SUPPORT
 		drv_pwm_start(R_LIGHT_PWM_CHANNEL);
 		drv_pwm_start(G_LIGHT_PWM_CHANNEL);
 		drv_pwm_start(B_LIGHT_PWM_CHANNEL);
-#else
-#if COLOR_CCT_SUPPORT
-		drv_pwm_start(WARM_LIGHT_PWM_CHANNEL);
-#endif
 		drv_pwm_start(COOL_LIGHT_PWM_CHANNEL);
-#endif
+		drv_pwm_start(WARM_LIGHT_PWM_CHANNEL);
 	}else{
-#if COLOR_RGB_SUPPORT
 		drv_pwm_stop(R_LIGHT_PWM_CHANNEL);
 		drv_pwm_stop(G_LIGHT_PWM_CHANNEL);
 		drv_pwm_stop(B_LIGHT_PWM_CHANNEL);
-#else
-#if COLOR_CCT_SUPPORT
-		drv_pwm_stop(WARM_LIGHT_PWM_CHANNEL);
-#endif
 		drv_pwm_stop(COOL_LIGHT_PWM_CHANNEL);
-#endif
+		drv_pwm_stop(WARM_LIGHT_PWM_CHANNEL);
 	}
 }
+
 
 /*********************************************************************
  * @fn      hwLight_levelUpdate
@@ -171,13 +159,14 @@ void hwLight_onOffUpdate(u8 onOff)
  */
 void hwLight_levelUpdate(u8 level)
 {
+	/* Use this if no rgb support
 #if !defined COLOR_RGB_SUPPORT || (COLOR_RGB_SUPPORT == 0)
 	level = (level < 0x10) ? 0x10 : level;
 
 	u16 gammaCorrectLevel = ((u16)level * level) / ZCL_LEVEL_ATTR_MAX_LEVEL;
 
 	pwmSetDuty(COOL_LIGHT_PWM_CHANNEL, gammaCorrectLevel * PWM_FULL_DUTYCYCLE);
-#endif
+#endif*/
 }
 
 /*********************************************************************
@@ -194,12 +183,10 @@ void hwLight_levelUpdate(u8 level)
  */
 void temperatureToCW(u16 temperatureMireds, u8 level, u8 *C, u8 *W)
 {
-#if COLOR_CCT_SUPPORT
 	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 
 	*W = (u8)(((temperatureMireds - pColor->colorTempPhysicalMinMireds) * level) / (pColor->colorTempPhysicalMaxMireds - pColor->colorTempPhysicalMinMireds));
 	*C = level - (*W);
-#endif
 }
 
 /*********************************************************************
@@ -214,7 +201,6 @@ void temperatureToCW(u16 temperatureMireds, u8 level, u8 *C, u8 *W)
  */
 void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
 {
-#if COLOR_CCT_SUPPORT
 	u8 C = 0;
 	u8 W = 0;
 
@@ -227,7 +213,9 @@ void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
 
 	pwmSetDuty(COOL_LIGHT_PWM_CHANNEL, gammaCorrectC * PWM_FULL_DUTYCYCLE);
 	pwmSetDuty(WARM_LIGHT_PWM_CHANNEL, gammaCorrectW * PWM_FULL_DUTYCYCLE);
-#endif
+	pwmSetDuty(R_LIGHT_PWM_CHANNEL, 0);
+	pwmSetDuty(G_LIGHT_PWM_CHANNEL, 0);
+	pwmSetDuty(B_LIGHT_PWM_CHANNEL, 0);
 }
 
 /*********************************************************************
@@ -246,7 +234,6 @@ void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
  */
 void hsvToRGB(u8 hue, u8 saturation, u8 level, u8 *R, u8 *G, u8 *B)
 {
-#if COLOR_RGB_SUPPORT
     u8 region;
     u8 remainder;
     u8 p, q, t;
@@ -299,7 +286,6 @@ void hsvToRGB(u8 hue, u8 saturation, u8 level, u8 *R, u8 *G, u8 *B)
     	*G = p;
     	*B = q;
     }
-#endif
 }
 
 /*********************************************************************
@@ -315,7 +301,6 @@ void hsvToRGB(u8 hue, u8 saturation, u8 level, u8 *R, u8 *G, u8 *B)
  */
 void hwLight_colorUpdate_HSV2RGB(u8 hue, u8 saturation, u8 level)
 {
-#if COLOR_RGB_SUPPORT
 	u8 R = 0;
 	u8 G = 0;
 	u8 B = 0;
@@ -324,6 +309,10 @@ void hwLight_colorUpdate_HSV2RGB(u8 hue, u8 saturation, u8 level)
 
 	hsvToRGB(hue, saturation, level, &R, &G, &B);
 
+	hwLight_colorUpdate_RGB(R,G,B);
+}
+
+void hwLight_colorUpdate_RGB(u8 R, u8 G, u8 B) {
 	u16 gammaCorrectR = ((u16)R * R) / ZCL_LEVEL_ATTR_MAX_LEVEL;
 	u16 gammaCorrectG = ((u16)G * G) / ZCL_LEVEL_ATTR_MAX_LEVEL;
 	u16 gammaCorrectB = ((u16)B * B) / ZCL_LEVEL_ATTR_MAX_LEVEL;
@@ -331,7 +320,40 @@ void hwLight_colorUpdate_HSV2RGB(u8 hue, u8 saturation, u8 level)
 	pwmSetDuty(PWM_R_CHANNEL, gammaCorrectR * PWM_FULL_DUTYCYCLE);
 	pwmSetDuty(PWM_G_CHANNEL, gammaCorrectG * PWM_FULL_DUTYCYCLE);
 	pwmSetDuty(PWM_B_CHANNEL, gammaCorrectB * PWM_FULL_DUTYCYCLE);
-#endif
+	pwmSetDuty(COOL_LIGHT_PWM_CHANNEL, 0);
+	pwmSetDuty(WARM_LIGHT_PWM_CHANNEL, 0);
+}
+
+static float ENFORCE_BOUNDS_FLOAT(float lowerBound, float num, float upperBound) {
+		return num < lowerBound ? lowerBound : num > upperBound ? upperBound : num;
+}
+
+float LINEAR_TO_SRGB_GAMMA_CORRECTION(const float part) {
+		return part <= 0.0031308 ? 12.92 * part : 1.055 * pow(part, 1.0 / 2.4) - 0.055;
+}
+
+void hwLight_colorUpdate_XY2RGB(u16 xI, u16 yI, u8 level) {
+		float x = xI / 65536.f;
+		float y = yI / 65536.f;
+
+		// This does not locate the closest point in the gamma spectrum of the lamps. possible #todo
+		const float z = 1 - x - y;
+
+		const float Y = level / ZCL_LEVEL_ATTR_MAX_LEVEL; // This is luminance, but used as brightness
+		const float X = ((Y) / y) * x;
+		const float Z = ((Y) / y) * z;
+
+		// D65 BT.709 conversion https://en.wikipedia.org/wiki/SRGB
+		float r = X * 1.656492 - Y * 0.354851 - Z * 0.255038;
+		float g = -X * 0.707196 + Y * 1.655397 + Z * 0.036152;
+		float b = X * 0.051713 - Y * 0.121364 + Z * 1.011530;
+
+		// Enforce the lower and upper bounds
+		r = ENFORCE_BOUNDS_FLOAT(0.0, r * 255, 255.0);
+		g = ENFORCE_BOUNDS_FLOAT(0.0, g * 255, 255.0);
+		b = ENFORCE_BOUNDS_FLOAT(0.0, b * 255, 255.0);
+
+		hwLight_colorUpdate_RGB((u8)r,(u8)g,(u8)b);
 }
 
 /*********************************************************************

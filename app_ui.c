@@ -59,8 +59,9 @@ void led_off(u32 pin){
 }
 
 void led_init(void){
-	led_off(LED_POWER);
-	led_off(LED_PERMIT);
+	led_off(LED_STATUS_R);
+	led_off(LED_STATUS_G);
+	led_off(LED_STATUS_B);
 }
 
 void localPermitJoinState(void){
@@ -68,9 +69,9 @@ void localPermitJoinState(void){
 	if(assocPermit != zb_getMacAssocPermit()){
 		assocPermit = zb_getMacAssocPermit();
 		if(assocPermit){
-			led_on(LED_PERMIT);
+			led_on(LED_STATUS_R);
 		}else{
-			led_off(LED_PERMIT);
+			led_off(LED_STATUS_R);
 		}
 	}
 }
@@ -78,6 +79,10 @@ void localPermitJoinState(void){
 void buttonKeepPressed(u8 btNum){
 	if(btNum == VK_SW1){
 		gLightCtx.state = APP_FACTORY_NEW_DOING;
+		led_on(LED_STATUS_R);
+		led_on(LED_STATUS_G);
+		led_on(LED_STATUS_B);
+
 		zb_factoryReset();
 	}else if(btNum == VK_SW2){
 

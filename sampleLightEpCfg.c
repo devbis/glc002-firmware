@@ -35,20 +35,18 @@
  * LOCAL CONSTANTS
  */
 #ifndef ZCL_BASIC_MFG_NAME
-#define ZCL_BASIC_MFG_NAME     		{6,'T','E','L','I','N','K'}
+#define ZCL_BASIC_MFG_NAME     		{8,'G','L','E','D','O','P','T','O'}
 #endif
 #ifndef ZCL_BASIC_MODEL_ID
-#define ZCL_BASIC_MODEL_ID	   		{8,'T','L','S','R','8','2','x','x'}
+#define ZCL_BASIC_MODEL_ID	   		{9,'G','L','-','C','-','0','0','8','P'}
 #endif
 #ifndef ZCL_BASIC_SW_BUILD_ID
-#define ZCL_BASIC_SW_BUILD_ID     	{10,'0','1','2','2','0','5','2','0','1','7'}
+#define ZCL_BASIC_SW_BUILD_ID     	{8,'2','0','2','2','0','4','0','1'}
 #endif
 
-
-#if COLOR_CCT_SUPPORT
-#define COLOR_TEMPERATURE_PHYSICAL_MIN	0x00FA//4000K
+#define COLOR_TEMPERATURE_PHYSICAL_MIN	0x009A//6500K
 #define COLOR_TEMPERATURE_PHYSICAL_MAX	0x01C6//2200K
-#endif
+#define COLOR_TEMPERATURE_DEFAULT		0x00FA//4000K
 
 /**********************************************************************
  * TYPEDEFS
@@ -110,15 +108,7 @@ const u16 sampleLight_outClusterList[] =
 const af_simple_descriptor_t sampleLight_simpleDesc =
 {
 	HA_PROFILE_ID,                      		/* Application profile identifier */
-#ifdef ZCL_LIGHT_COLOR_CONTROL
 	HA_DEV_COLOR_DIMMABLE_LIGHT,
-#else
-	#ifdef ZCL_LEVEL_CTRL
-		HA_DEV_DIMMABLE_LIGHT,              	/* Application device identifier */
-	#else
-		HA_DEV_ONOFF_LIGHT,						/* Application device identifier */
-	#endif
-#endif
 	SAMPLE_LIGHT_ENDPOINT,              		/* Endpoint */
 	1,                                  		/* Application device version */
 	0,											/* Reserved */
@@ -128,61 +118,13 @@ const af_simple_descriptor_t sampleLight_simpleDesc =
 	(u16 *)sampleLight_outClusterList,   		/* Application output cluster list */
 };
 
-#if AF_TEST_ENABLE
-/**
- *  @brief Definition for Incoming cluster / Sever Cluster
- */
-const u16 sampleTest_inClusterList[] =
-{
-	ZCL_CLUSTER_TELINK_SDK_TEST_REQ,
-	ZCL_CLUSTER_TELINK_SDK_TEST_RSP,
-	ZCL_CLUSTER_TELINK_SDK_TEST_CLEAR_REQ,
-	ZCL_CLUSTER_TELINK_SDK_TEST_CLEAR_RSP,
-};
-
-
-/**
- *  @brief Definition for Outgoing cluster / Client Cluster
- */
-const u16 sampleTest_outClusterList[] =
-{
-	ZCL_CLUSTER_TELINK_SDK_TEST_REQ,
-	ZCL_CLUSTER_TELINK_SDK_TEST_RSP,
-	ZCL_CLUSTER_TELINK_SDK_TEST_CLEAR_REQ,
-	ZCL_CLUSTER_TELINK_SDK_TEST_CLEAR_RSP,
-};
-
-/**
- *  @brief Definition for Server cluster number and Client cluster number
- */
-#define SAMPLE_TEST_IN_CLUSTER_NUM		(sizeof(sampleTest_inClusterList)/sizeof(sampleTest_inClusterList[0]))
-#define SAMPLE_TEST_OUT_CLUSTER_NUM		(sizeof(sampleTest_outClusterList)/sizeof(sampleTest_outClusterList[0]))
-
-/**
- *  @brief Definition for simple description for HA profile
- */
-const af_simple_descriptor_t sampleTestDesc =
-{
-	HA_PROFILE_ID,                      /* Application profile identifier */
-	HA_DEV_DIMMABLE_LIGHT,              /* Application device identifier */
-	SAMPLE_TEST_ENDPOINT,               /* Endpoint */
-	0,                                  /* Application device version */
-	0,									/* Reserved */
-	SAMPLE_TEST_IN_CLUSTER_NUM,         /* Application input cluster count */
-	SAMPLE_TEST_OUT_CLUSTER_NUM,        /* Application output cluster count */
-	(u16 *)sampleTest_inClusterList,    /* Application input cluster list */
-	(u16 *)sampleTest_outClusterList,   /* Application output cluster list */
-};
-#endif	/* AF_TEST_ENABLE */
-
-
 /* Basic */
 zcl_basicAttr_t g_zcl_basicAttrs =
 {
 	.zclVersion 	= 0x03,
 	.appVersion 	= 0x00,
-	.stackVersion 	= 0x02,
-	.hwVersion		= 0x00,
+	.stackVersion 	= 0x00,
+	.hwVersion		= 0x02,
 	.manuName		= ZCL_BASIC_MFG_NAME,
 	.modelId		= ZCL_BASIC_MODEL_ID,
 	.powerSource	= POWER_SOURCE_MAINS_1_PHASE,
@@ -311,29 +253,28 @@ const zclAttrInfo_t level_attrTbl[] =
 #define ZCL_LEVEL_ATTR_NUM	 sizeof(level_attrTbl) / sizeof(zclAttrInfo_t)
 #endif
 
-#ifdef ZCL_LIGHT_COLOR_CONTROL
 /* Color Control */
 zcl_lightColorCtrlAttr_t g_zcl_colorCtrlAttrs =
 {
 	.colorMode						= ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS,
 	.options						= 0,
 	.enhancedColorMode				= ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS,
-	.colorCapabilities				= ZCL_COLOR_CAPABILITIES_BIT_COLOR_TEMPERATURE,
+	.colorCapabilities				= ZCL_COLOR_CAPABILITIES_BIT_COLOR_TEMPERATURE | ZCL_COLOR_CAPABILITIES_BIT_X_Y_ATTRIBUTES | ZCL_COLOR_CAPABILITIES_BIT_HUE_SATURATION,
 	.numOfPrimaries					= 0,
-#if COLOR_RGB_SUPPORT
 	.currentHue						= 0x00,
 	.currentSaturation				= 0x00,
+	.currentX						= 0x616b,
+	.currentY						= 0x607d,
+	.enhancedCurrentHue				= 0x0000,
 	.colorLoopActive				= 0x00,
 	.colorLoopDirection				= 0x00,
 	.colorLoopTime					= 0x0019,
 	.colorLoopStartEnhancedHue		= 0x2300,
 	.colorLoopStoredEnhancedHue		= 0x0000,
-#elif COLOR_CCT_SUPPORT
-	.colorTemperatureMireds			= COLOR_TEMPERATURE_PHYSICAL_MAX,
+	.colorTemperatureMireds			= COLOR_TEMPERATURE_DEFAULT,
 	.colorTempPhysicalMinMireds		= COLOR_TEMPERATURE_PHYSICAL_MIN,
 	.colorTempPhysicalMaxMireds 	= COLOR_TEMPERATURE_PHYSICAL_MAX,
 	.startUpColorTemperatureMireds 	= ZCL_START_UP_COLOR_TEMPERATURE_MIREDS_TO_PREVIOUS,
-#endif
 };
 
 const zclAttrInfo_t lightColorCtrl_attrTbl[] =
@@ -343,27 +284,25 @@ const zclAttrInfo_t lightColorCtrl_attrTbl[] =
     { ZCL_ATTRID_ENHANCED_COLOR_MODE,     			ZCL_DATA_TYPE_ENUM8,   	ACCESS_CONTROL_READ,     					(u8*)&g_zcl_colorCtrlAttrs.enhancedColorMode },
     { ZCL_ATTRID_COLOR_CAPABILITIES,       			ZCL_DATA_TYPE_BITMAP16, ACCESS_CONTROL_READ,     					(u8*)&g_zcl_colorCtrlAttrs.colorCapabilities },
     { ZCL_ATTRID_NUMBER_OF_PRIMARIES,     			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ,     					(u8*)&g_zcl_colorCtrlAttrs.numOfPrimaries },
-
-#if COLOR_RGB_SUPPORT
+    { ZCL_ATTRID_CURRENT_X,              			ZCL_DATA_TYPE_UINT16,  	ACCESS_CONTROL_READ,     					(u8*)&g_zcl_colorCtrlAttrs.currentX },
+    { ZCL_ATTRID_CURRENT_Y,              			ZCL_DATA_TYPE_UINT16, 	ACCESS_CONTROL_READ,     						(u8*)&g_zcl_colorCtrlAttrs.currentY },
     { ZCL_ATTRID_CURRENT_HUE,             			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.currentHue },
+	{ ZCL_ATTRID_ENHANCED_CURRENT_HUE,    			ZCL_DATA_TYPE_UINT16,   ACCESS_CONTROL_READ,    						 (u8*)&g_zcl_colorCtrlAttrs.currentHue },
     { ZCL_ATTRID_CURRENT_SATURATION,      			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.currentSaturation },
     { ZCL_ATTRID_COLOR_LOOP_ACTIVE,       			ZCL_DATA_TYPE_UINT8,    ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.colorLoopActive },
     { ZCL_ATTRID_COLOR_LOOP_DIRECTION,    			ZCL_DATA_TYPE_UINT8,    ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.colorLoopDirection },
     { ZCL_ATTRID_COLOR_LOOP_TIME,         			ZCL_DATA_TYPE_UINT16,   ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.colorLoopTime },
     { ZCL_ATTRID_COLOR_LOOP_START_ENHANCED_HUE,   	ZCL_DATA_TYPE_UINT16,   ACCESS_CONTROL_READ,     						 (u8*)&g_zcl_colorCtrlAttrs.colorLoopStartEnhancedHue },
     { ZCL_ATTRID_COLOR_LOOP_STORED_ENHANCED_HUE,  	ZCL_DATA_TYPE_UINT16,   ACCESS_CONTROL_READ,     						 (u8*)&g_zcl_colorCtrlAttrs.colorLoopStoredEnhancedHue },
-#elif COLOR_CCT_SUPPORT
     { ZCL_ATTRID_COLOR_TEMPERATURE_MIREDS,			ZCL_DATA_TYPE_UINT16,  	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.colorTemperatureMireds },
     { ZCL_ATTRID_COLOR_TEMP_PHYSICAL_MIN_MIREDS,  	ZCL_DATA_TYPE_UINT16,  	ACCESS_CONTROL_READ,     						 (u8*)&g_zcl_colorCtrlAttrs.colorTempPhysicalMinMireds },
     { ZCL_ATTRID_COLOR_TEMP_PHYSICAL_MAX_MIREDS,  	ZCL_DATA_TYPE_UINT16,  	ACCESS_CONTROL_READ,     						 (u8*)&g_zcl_colorCtrlAttrs.colorTempPhysicalMaxMireds },
     { ZCL_ATTRID_START_UP_COLOR_TEMPERATURE_MIREDS, ZCL_DATA_TYPE_UINT16,  	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,      (u8*)&g_zcl_colorCtrlAttrs.startUpColorTemperatureMireds },
-#endif
 
     { ZCL_ATTRID_GLOBAL_CLUSTER_REVISION, 			ZCL_DATA_TYPE_UINT16,   ACCESS_CONTROL_READ,  							 (u8*)&zcl_attr_global_clusterRevision},
 };
 
 #define ZCL_COLOR_ATTR_NUM	 sizeof(lightColorCtrl_attrTbl) / sizeof(zclAttrInfo_t)
-#endif
 
 /**
  *  @brief Definition for simple light ZCL specific cluster
@@ -372,21 +311,11 @@ const zcl_specClusterInfo_t g_sampleLightClusterList[] =
 {
 	{ZCL_CLUSTER_GEN_BASIC,				 MANUFACTURER_CODE_NONE, 	ZCL_BASIC_ATTR_NUM, 	basic_attrTbl,  		zcl_basic_register,			 sampleLight_basicCb},
 	{ZCL_CLUSTER_GEN_IDENTIFY,			 MANUFACTURER_CODE_NONE, 	ZCL_IDENTIFY_ATTR_NUM,	identify_attrTbl,		zcl_identify_register,		 sampleLight_identifyCb},
-#ifdef ZCL_GROUP
 	{ZCL_CLUSTER_GEN_GROUPS,			 MANUFACTURER_CODE_NONE, 	ZCL_GROUP_ATTR_NUM, 	group_attrTbl,  		zcl_group_register,			 NULL},
-#endif
-#ifdef ZCL_SCENE
 	{ZCL_CLUSTER_GEN_SCENES,			 MANUFACTURER_CODE_NONE, 	ZCL_SCENE_ATTR_NUM,		scene_attrTbl,			zcl_scene_register,			 sampleLight_sceneCb},
-#endif
-#ifdef ZCL_ON_OFF
 	{ZCL_CLUSTER_GEN_ON_OFF,			 MANUFACTURER_CODE_NONE, 	ZCL_ONOFF_ATTR_NUM,		onOff_attrTbl,			zcl_onOff_register,			 sampleLight_onOffCb},
-#endif
-#ifdef ZCL_LEVEL_CTRL
 	{ZCL_CLUSTER_GEN_LEVEL_CONTROL,		 MANUFACTURER_CODE_NONE, 	ZCL_LEVEL_ATTR_NUM,		level_attrTbl,			zcl_level_register,			 sampleLight_levelCb},
-#endif
-#ifdef ZCL_LIGHT_COLOR_CONTROL
 	{ZCL_CLUSTER_LIGHTING_COLOR_CONTROL, MANUFACTURER_CODE_NONE, 	ZCL_COLOR_ATTR_NUM,		lightColorCtrl_attrTbl,	zcl_lightColorCtrl_register, sampleLight_colorCtrlCb},
-#endif
 };
 
 u8 SAMPLELIGHT_CB_CLUSTER_NUM = (sizeof(g_sampleLightClusterList)/sizeof(g_sampleLightClusterList[0]));
@@ -410,7 +339,6 @@ nv_sts_t zcl_onOffAttr_save(void)
 {
 	nv_sts_t st = NV_SUCC;
 
-#ifdef ZCL_ON_OFF
 #if NV_ENABLE
 	zcl_nv_onOff_t zcl_nv_onOff;
 
@@ -432,7 +360,6 @@ nv_sts_t zcl_onOffAttr_save(void)
 #else
 	st = NV_ENABLE_PROTECT_ERROR;
 #endif
-#endif
 
 	return st;
 }
@@ -450,7 +377,6 @@ nv_sts_t zcl_onOffAttr_restore(void)
 {
 	nv_sts_t st = NV_SUCC;
 
-#ifdef ZCL_ON_OFF
 #if NV_ENABLE
 	zcl_nv_onOff_t zcl_nv_onOff;
 
@@ -462,7 +388,6 @@ nv_sts_t zcl_onOffAttr_restore(void)
 	}
 #else
 	st = NV_ENABLE_PROTECT_ERROR;
-#endif
 #endif
 
 	return st;
@@ -481,7 +406,6 @@ nv_sts_t zcl_levelAttr_save(void)
 {
 	nv_sts_t st = NV_SUCC;
 
-#ifdef ZCL_LEVEL_CTRL
 #if NV_ENABLE
 	zcl_nv_level_t zcl_nv_level;
 
@@ -503,7 +427,6 @@ nv_sts_t zcl_levelAttr_save(void)
 #else
 	st = NV_ENABLE_PROTECT_ERROR;
 #endif
-#endif
 
 	return st;
 }
@@ -521,7 +444,6 @@ nv_sts_t zcl_levelAttr_restore(void)
 {
 	nv_sts_t st = NV_SUCC;
 
-#ifdef ZCL_LEVEL_CTRL
 #if NV_ENABLE
 	zcl_nv_level_t zcl_nv_level;
 
@@ -533,7 +455,6 @@ nv_sts_t zcl_levelAttr_restore(void)
 	}
 #else
 	st = NV_ENABLE_PROTECT_ERROR;
-#endif
 #endif
 
 	return st;
@@ -552,50 +473,37 @@ nv_sts_t zcl_colorCtrlAttr_save(void)
 {
 	nv_sts_t st = NV_SUCC;
 
-#ifdef ZCL_LIGHT_COLOR_CONTROL
 #if NV_ENABLE
 	bool needSave = FALSE;
 	zcl_nv_colorCtrl_t zcl_nv_colorCtrl;
 
 	st = nv_flashReadNew(1, NV_MODULE_ZCL,  NV_ITEM_ZCL_COLOR_CTRL, sizeof(zcl_nv_colorCtrl_t), (u8*)&zcl_nv_colorCtrl);
 
-#if COLOR_RGB_SUPPORT
 	if(st == NV_SUCC){
-		if((zcl_nv_colorCtrl.currentHue != g_zcl_colorCtrlAttrs.currentHue) || (zcl_nv_colorCtrl.currentSaturation != g_zcl_colorCtrlAttrs.currentSaturation)){
+		if((zcl_nv_colorCtrl.currentHue != g_zcl_colorCtrlAttrs.currentHue) || (zcl_nv_colorCtrl.currentSaturation != g_zcl_colorCtrlAttrs.currentSaturation)
+		|| (zcl_nv_colorCtrl.colorTemperatureMireds != g_zcl_colorCtrlAttrs.colorTemperatureMireds) 
+		|| (zcl_nv_colorCtrl.startUpColorTemperatureMireds != g_zcl_colorCtrlAttrs.startUpColorTemperatureMireds)){
 			zcl_nv_colorCtrl.currentHue = g_zcl_colorCtrlAttrs.currentHue;
 			zcl_nv_colorCtrl.currentSaturation = g_zcl_colorCtrlAttrs.currentSaturation;
-
-			needSave = TRUE;
-		}
-	}else if(st == NV_ITEM_NOT_FOUND){
-		zcl_nv_colorCtrl.currentHue = g_zcl_colorCtrlAttrs.currentHue;
-		zcl_nv_colorCtrl.currentSaturation = g_zcl_colorCtrlAttrs.currentSaturation;
-
-		needSave = TRUE;
-	}
-#elif COLOR_CCT_SUPPORT
-	if(st == NV_SUCC){
-		if((zcl_nv_colorCtrl.colorTemperatureMireds != g_zcl_colorCtrlAttrs.colorTemperatureMireds) || (zcl_nv_colorCtrl.startUpColorTemperatureMireds != g_zcl_colorCtrlAttrs.startUpColorTemperatureMireds)){
 			zcl_nv_colorCtrl.colorTemperatureMireds = g_zcl_colorCtrlAttrs.colorTemperatureMireds;
 			zcl_nv_colorCtrl.startUpColorTemperatureMireds = g_zcl_colorCtrlAttrs.startUpColorTemperatureMireds;
 
 			needSave = TRUE;
 		}
 	}else if(st == NV_ITEM_NOT_FOUND){
+		zcl_nv_colorCtrl.currentHue = g_zcl_colorCtrlAttrs.currentHue;
+		zcl_nv_colorCtrl.currentSaturation = g_zcl_colorCtrlAttrs.currentSaturation;
 		zcl_nv_colorCtrl.colorTemperatureMireds = g_zcl_colorCtrlAttrs.colorTemperatureMireds;
 		zcl_nv_colorCtrl.startUpColorTemperatureMireds = g_zcl_colorCtrlAttrs.startUpColorTemperatureMireds;
 
 		needSave = TRUE;
 	}
-#endif
+
 
 	if(needSave){
 		st = nv_flashWriteNew(1, NV_MODULE_ZCL, NV_ITEM_ZCL_COLOR_CTRL, sizeof(zcl_nv_colorCtrl_t), (u8*)&zcl_nv_colorCtrl);
 	}
 
-#else
-	st = NV_ENABLE_PROTECT_ERROR;
-#endif
 #endif
 
 	return st;
@@ -614,27 +522,19 @@ nv_sts_t zcl_colorCtrlAttr_restore(void)
 {
 	nv_sts_t st = NV_SUCC;
 
-#ifdef ZCL_LIGHT_COLOR_CONTROL
 #if NV_ENABLE
 	zcl_nv_colorCtrl_t zcl_nv_colorCtrl;
 
 	st = nv_flashReadNew(1, NV_MODULE_ZCL,  NV_ITEM_ZCL_COLOR_CTRL, sizeof(zcl_nv_colorCtrl_t), (u8*)&zcl_nv_colorCtrl);
 
-#if COLOR_RGB_SUPPORT
 	if(st == NV_SUCC){
 		g_zcl_colorCtrlAttrs.currentHue = zcl_nv_colorCtrl.currentHue;
 		g_zcl_colorCtrlAttrs.currentSaturation = zcl_nv_colorCtrl.currentSaturation;
-	}
-#elif COLOR_CCT_SUPPORT
-	if(st == NV_SUCC){
 		g_zcl_colorCtrlAttrs.colorTemperatureMireds = zcl_nv_colorCtrl.colorTemperatureMireds;
 		g_zcl_colorCtrlAttrs.startUpColorTemperatureMireds = zcl_nv_colorCtrl.startUpColorTemperatureMireds;
 	}
-#endif
-
 #else
 	st = NV_ENABLE_PROTECT_ERROR;
-#endif
 #endif
 
 	return st;

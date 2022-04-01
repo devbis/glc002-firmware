@@ -44,23 +44,15 @@ extern "C" {
 /* HCI interface */
 #define	ZBHCI_UART						0
 
-/* RGB or CCT */
-#define COLOR_RGB_SUPPORT				0
-#define COLOR_CCT_SUPPORT				1
+/* RGB + CCT always */
+#define COLOR_RGB_SUPPORT				1
 
 /* BDB */
 #define TOUCHLINK_SUPPORT				1
 #define FIND_AND_BIND_SUPPORT			0
 
 /* Board ID */
-#define BOARD_826x_EVK					0
-#define BOARD_826x_DONGLE				1
-#define BOARD_8258_EVK					2
-#define BOARD_8258_DONGLE				3
-#define BOARD_8278_EVK					4
-#define BOARD_8278_DONGLE				5
-#define BOARD_9518_EVK					6
-#define BOARD_9518_DONGLE				7
+#define BOARD_GLC002P					0
 
 /* Board define */
 #if defined(MCU_CORE_826x)
@@ -70,7 +62,7 @@ extern "C" {
 #if (CHIP_TYPE == TLSR_8258_1M)
 	#define FLASH_CAP_SIZE_1M			1
 #endif
-	#define BOARD						BOARD_8258_DONGLE//BOARD_8258_EVK
+	#define BOARD						BOARD_GLC002P
 	#define CLOCK_SYS_CLOCK_HZ  		48000000
 #elif defined(MCU_CORE_8278)
 	#define FLASH_CAP_SIZE_1M			1
@@ -85,22 +77,8 @@ extern "C" {
 #endif
 
 /* Board include */
-#if (BOARD == BOARD_826x_EVK)
-	#include "board_826x_evk.h"
-#elif(BOARD == BOARD_826x_DONGLE)
-	#include "board_826x_dongle.h"
-#elif(BOARD == BOARD_8258_DONGLE)
-	#include "board_8258_dongle.h"
-#elif(BOARD == BOARD_8258_EVK)
-	#include "board_8258_evk.h"
-#elif(BOARD == BOARD_8278_EVK)
-	#include "board_8278_evk.h"
-#elif(BOARD == BOARD_8278_DONGLE)
-	#include "board_8278_dongle.h"
-#elif (BOARD == BOARD_9518_EVK)
-	#include "board_9518_evk.h"
-#elif (BOARD == BOARD_9518_DONGLE)
-	#include "board_9518_dongle.h"
+#if(BOARD == BOARD_GLC002P)
+	#include "board_glc002p.h"
 #endif
 
 
@@ -129,7 +107,7 @@ extern "C" {
  */
 #define ZCL_ON_OFF_SUPPORT							1
 #define ZCL_LEVEL_CTRL_SUPPORT						1
-#if (COLOR_RGB_SUPPORT || COLOR_CCT_SUPPORT)
+#if (COLOR_RGB_SUPPORT)
 #define ZCL_LIGHT_COLOR_CONTROL_SUPPORT				1
 #endif
 #define ZCL_GROUP_SUPPORT							1
