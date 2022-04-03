@@ -34,11 +34,6 @@
 #ifdef ZCL_LEVEL_CTRL
 
 /**********************************************************************
- * LOCAL CONSTANTS
- */
-#define ZCL_LEVEL_CHANGE_INTERVAL 100
-
-/**********************************************************************
  * TYPEDEFS
  */
 typedef struct

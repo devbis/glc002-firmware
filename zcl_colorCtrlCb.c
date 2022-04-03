@@ -34,11 +34,6 @@
 #ifdef ZCL_LIGHT_COLOR_CONTROL
 
 /**********************************************************************
- * LOCAL CONSTANTS
- */
-#define ZCL_COLOR_CHANGE_INTERVAL 20 // Step 50 times a second, every 20ms
-
-/**********************************************************************
  * TYPEDEFS
  */
 typedef struct

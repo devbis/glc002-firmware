@@ -31,6 +31,12 @@
 #define SAMPLE_TEST_ENDPOINT 0x02
 
 /**********************************************************************
+ * TIMER CONSTANTS
+ */
+#define ZCL_LEVEL_CHANGE_INTERVAL 20 // Step 50 times a second, every 20ms
+#define ZCL_COLOR_CHANGE_INTERVAL 20 // see above
+
+/**********************************************************************
  * TYPEDEFS
  */
 typedef struct
