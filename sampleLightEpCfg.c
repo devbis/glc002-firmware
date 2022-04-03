@@ -53,7 +53,7 @@
 #endif
 
 #define COLOR_TEMPERATURE_PHYSICAL_MIN 0x009A // 6500K
-#define COLOR_TEMPERATURE_PHYSICAL_MAX 0x01C6 // 2200K
+#define COLOR_TEMPERATURE_PHYSICAL_MAX 0x172  // 2700K, default in z2m for gl-c-008p 2020K aka 0x01ef
 #define COLOR_TEMPERATURE_DEFAULT 0x00FA	  // 4000K
 
 /**********************************************************************
