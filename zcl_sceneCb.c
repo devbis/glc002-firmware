@@ -75,7 +75,7 @@ static void sampleLight_sceneRecallReqHandler(zclIncomingAddrInfo_t *pAddrInfo, 
 #endif
 
 #ifdef ZCL_LIGHT_COLOR_CONTROL
-	if (colorMode == ZCL_COLOR_MODE_CURRENT_HUE_SATURATION)
+	if (colorMode == ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS)
 	{
 		zcl_colorCtrlMoveToColorTemperatureCmd_t move2ColorTemp;
 		move2ColorTemp.colorTemperature = colorTemperatureMireds;
