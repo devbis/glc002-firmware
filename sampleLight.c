@@ -241,9 +241,7 @@ void app_task(void)
 
 		report_handler();
 
-#if 0 /* NOTE: If set to '1', the latest status of lighting will be stored. */
 		sampleLightAttrsChk();
-#endif
 	}
 }
 

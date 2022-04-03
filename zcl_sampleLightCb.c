@@ -148,17 +148,31 @@ static void sampleLight_zclReadRspCmd(zclReadRspCmd_t *pReadRspCmd)
  */
 static void sampleLight_zclWriteReqCmd(u16 clusterId, zclWriteCmd_t *pWriteReqCmd)
 {
+	// Check if we got the right clusters, if not return early
+	if (clusterId != ZCL_CLUSTER_GEN_ON_OFF && clusterId != ZCL_CLUSTER_GEN_LEVEL_CONTROL && clusterId != ZCL_CLUSTER_LIGHTING_COLOR_CONTROL)	{
+		return;
+	}
+
 	u8 numAttr = pWriteReqCmd->numAttr;
 	zclWriteRec_t *attr = pWriteReqCmd->attrList;
 
-	if (clusterId == ZCL_CLUSTER_GEN_ON_OFF)
+	// This iterates over the attributes and double checks the attributes are set correctly, so we dont violate the spec.
+	for (u8 i = 0; i < numAttr; i++)
 	{
-		for (u8 i = 0; i < numAttr; i++)
+		if (clusterId == ZCL_CLUSTER_GEN_ON_OFF && attr[i].attrID == ZCL_ATTRID_START_UP_ONOFF)
 		{
-			if (attr[i].attrID == ZCL_ATTRID_START_UP_ONOFF)
-			{
-				zcl_onOffAttr_save();
-			}
+			zcl_onOffAttr_save();
+			break;
+		}
+		else if (clusterId == ZCL_CLUSTER_LIGHTING_COLOR_CONTROL && attr[i].attrID == ZCL_ATTRID_START_UP_COLOR_TEMPERATURE_MIREDS)
+		{
+			zcl_colorCtrlAttr_save();
+			break;
+		} 
+		else if (clusterId == ZCL_CLUSTER_GEN_LEVEL_CONTROL && attr[i].attrID == ZCL_ATTRID_LEVEL_START_UP_CURRENT_LEVEL)
+		{
+			zcl_levelAttr_save();
+			break;
 		}
 	}
 }
