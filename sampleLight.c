@@ -155,7 +155,8 @@ void user_app_init(void)
 	af_endpointRegister(SAMPLE_TEST_ENDPOINT, (af_simple_descriptor_t *)&sampleTestDesc, afTest_rx_handler, afTest_dataSendConfirm);
 #endif
 
-	/* Initialize or restore attributes, this must before 'zcl_register()' */
+	/* Initialize or restore attributes, 
+	   this must be done before 'zcl_register()' as it is in charge of restoring the correct values */
 	zcl_sampleLightAttrsInit();
 	zcl_reportingTabInit();
 

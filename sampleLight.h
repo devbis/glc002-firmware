@@ -155,8 +155,8 @@ typedef struct
  */
 typedef struct
 {
-	u8 onOff;
-	u8 startUpOnOff;
+	u8 startUp;
+	bool lastState;
 } zcl_nv_onOff_t;
 
 /**
@@ -164,8 +164,8 @@ typedef struct
  */
 typedef struct
 {
-	u8 curLevel;
-	u8 startUpCurLevel;
+	u8 startUp;
+	u8 lastLevel;
 } zcl_nv_level_t;
 
 /**
@@ -173,10 +173,8 @@ typedef struct
  */
 typedef struct
 {
-	u8 currentHue;
-	u8 currentSaturation;
-	u16 colorTemperatureMireds;
-	u16 startUpColorTemperatureMireds;
+	u16 startUpMireds;
+	u16 lastMireds;
 } zcl_nv_colorCtrl_t;
 
 /**********************************************************************
