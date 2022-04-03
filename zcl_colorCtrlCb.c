@@ -56,6 +56,11 @@ typedef struct
 	u16 colorTempRemainingTime;
 	u16 colorTempMinMireds;
 	u16 colorTempMaxMireds;
+
+	s32 stepXY;
+	u32 currentX256;
+	u32 currentY256;
+	u16 xyRemainingTime;
 } zcl_colorInfo_t;
 
 /**********************************************************************
@@ -75,6 +80,11 @@ static zcl_colorInfo_t colorInfo = {
 	.colorTempRemainingTime = 0,
 	.colorTempMinMireds = 0,
 	.colorTempMaxMireds = 0,
+	
+	.stepXY = 0,
+	.currentX256 = 0,
+	.currentY256 = 0,
+	.xyRemainingTime = 0,
 };
 
 static ev_timer_event_t *colorTimerEvt = NULL;
@@ -103,10 +113,13 @@ void sampleLight_colorInit(void)
 	colorInfo.currentHue256 = (u16)(pColor->currentHue) << 8;
 	colorInfo.currentSaturation256 = (u16)(pColor->currentSaturation) << 8;
 	colorInfo.currentColorTemp256 = (u32)(pColor->colorTemperatureMireds) << 8;
+	colorInfo.currentX256 = (u32)(pColor->currentX) << 8;
+	colorInfo.currentY256 = (u32)(pColor->currentY) << 8;
 
 	colorInfo.hueRemainingTime = 0;
 	colorInfo.saturationRemainingTime = 0;
 	colorInfo.colorTempRemainingTime = 0;
+	colorInfo.xyRemainingTime = 0;
 
 	// Startup is only defined for color temperature, so why would we load any colors here ...
 	pColor->colorMode = ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS;
@@ -625,6 +638,12 @@ static void sampleLight_moveToHueAndSaturationProcess(zcl_colorCtrlMoveToHueAndS
 	sampleLight_moveToSaturationProcess(&moveToSaturationCmd);
 }
 
+
+/***
+ * 
+ * HEAVY TODO BELOW this is entirely unimplemented and causing issues if XY support is indicated!
+ * /
+
 /*********************************************************************
  * @fn      sampleLight_moveToColorProcess
  *
@@ -642,6 +661,12 @@ static void sampleLight_moveToColorProcess(zcl_colorCtrlMoveToColorCmd_t *cmd)
 
 	pColor->colorMode = ZCL_COLOR_MODE_CURRENT_X_Y;
 	pColor->enhancedColorMode = ZCL_COLOR_MODE_CURRENT_X_Y;
+
+	light_applyUpdate_16(&pColor->currentX, &colorInfo.currentX256, &colorInfo.stepXY, &colorInfo.xyRemainingTime,
+						 ZCL_COLOR_ATTR_XY_MIN, ZCL_COLOR_ATTR_XY_MAX, FALSE);
+
+	light_applyUpdate_16(&pColor->currentY, &colorInfo.currentY256, &colorInfo.stepXY, &colorInfo.xyRemainingTime,
+						 ZCL_COLOR_ATTR_XY_MIN, ZCL_COLOR_ATTR_XY_MAX, FALSE);
 }
 
 /*********************************************************************
@@ -661,6 +686,12 @@ static void sampleLight_moveColorProcess(zcl_colorCtrlMoveColorCmd_t *cmd)
 
 	pColor->colorMode = ZCL_COLOR_MODE_CURRENT_X_Y;
 	pColor->enhancedColorMode = ZCL_COLOR_MODE_CURRENT_X_Y;
+
+	light_applyUpdate_16(&pColor->currentX, &colorInfo.currentX256, &colorInfo.stepXY, &colorInfo.xyRemainingTime,
+						 ZCL_COLOR_ATTR_XY_MIN, ZCL_COLOR_ATTR_XY_MAX, FALSE);
+
+	light_applyUpdate_16(&pColor->currentY, &colorInfo.currentY256, &colorInfo.stepXY, &colorInfo.xyRemainingTime,
+						 ZCL_COLOR_ATTR_XY_MIN, ZCL_COLOR_ATTR_XY_MAX, FALSE);
 }
 
 /*********************************************************************
@@ -680,6 +711,12 @@ static void sampleLight_stepColorProcess(zcl_colorCtrlStepColorCmd_t *cmd)
 
 	pColor->colorMode = ZCL_COLOR_MODE_CURRENT_X_Y;
 	pColor->enhancedColorMode = ZCL_COLOR_MODE_CURRENT_X_Y;
+
+	light_applyUpdate_16(&pColor->currentX, &colorInfo.currentX256, &colorInfo.stepXY, &colorInfo.xyRemainingTime,
+						 ZCL_COLOR_ATTR_XY_MIN, ZCL_COLOR_ATTR_XY_MAX, FALSE);
+
+	light_applyUpdate_16(&pColor->currentY, &colorInfo.currentY256, &colorInfo.stepXY, &colorInfo.xyRemainingTime,
+						 ZCL_COLOR_ATTR_XY_MIN, ZCL_COLOR_ATTR_XY_MAX, FALSE);
 }
 
 /*********************************************************************
