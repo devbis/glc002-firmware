@@ -338,78 +338,73 @@ void hwLight_colorUpdate_RGB(u8 R, u8 G, u8 B)
 	pwmSetDuty(WARM_LIGHT_PWM_CHANNEL, 0);
 }
 
-static float ENFORCE_BOUNDS_FLOAT(float lowerBound, float num, float upperBound)
+static u8 ENFORCE_BOUNDS_U8(u8 lowerBound, s16 num, u8 upperBound)
 {
-	return num < lowerBound ? lowerBound : num > upperBound ? upperBound
-															: num;
+	return num < lowerBound ? lowerBound : num > upperBound ? upperBound : num;
 }
 
 /*
-	A horrible power function for floats
+    iLog, pow and root functions, taken from
+	http://rosettacode.org/wiki/Nth_root#C
 */
-static float fpow(float x, float y) {
-	float result = 1;
-	for(int i = 0; i < y; ++i)
-	{
-		result *= x;
-	}
+float _fpow(float x, int e) {
+    int i;
+    float r = 1;
+    for (i = 0; i < e; i++) {
+        r *= x;
+    }
+    return r;
+}
 
-	return result;
+float _fsqrt(float x, int n) {
+    float d, r = 1;
+    if (!x) {
+        return 0;
+    }
+    if (n < 1 || (x < 0 && !(n&1))) {
+        return 0.0 / 0.0; /* NaN */
+    }
+    do {
+        d = (x / _fpow(r, n - 1) - r) / n;
+        r += d;
+    }
+    while (d >= 0.000010f * 10 || d <= -0.000010f * 10);
+    return r;
 }
 
 float LINEAR_TO_SRGB_GAMMA_CORRECTION(const float part)
 {
-	return part <= 0.0031308f ? 12.92f * part : 1.055f * fpow(part, 1.0f / 2.4f) - 0.055f;
+	// Optimization for embedded devices without math libraries: a ^ (m / n) == nth_root(a) ^ m
+	return part <= 0.0031308f ? 12.92f * part : 1.055f * _fpow(_fsqrt(part, 12), 5) - 0.055f;
 }
 
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
-#define roundu8(a) (u8) (a+0.5) 
+#define round(a) (s16) (a+0.5) 
 
 void hwLight_colorUpdate_XY2RGB(u16 xI, u16 yI, u8 level)
 {
-	float x = xI / (float)ZCL_COLOR_ATTR_XY_MAX;
-	float y = yI / (float)ZCL_COLOR_ATTR_XY_MAX;
+	float x = xI / 65535.0f;
+	float y = yI / 65535.0f;
 
 	// This does not locate the closest point in the gamma spectrum of the lamps. possible #todo
-	const float z = 1 - x - y;
+	const float z = 1.f - x - y;
 
-	const float Y = level / (float)ZCL_LEVEL_ATTR_MAX_LEVEL; // This is luminance, but used as brightness
-	const float X = ((Y) / y) * x;
-	const float Z = ((Y) / y) * z;
-
-	// D65 BT.709 conversion https://en.wikipedia.org/wiki/SRGB
-	float r = X * 1.656492f - Y * 0.354851f - Z * 0.255038f;
-	float g = -X * 0.707196f + Y * 1.655397f + Z * 0.036152f;
-	float b = X * 0.051713f - Y * 0.121364f + Z * 1.011530f;
-
-	// Normalize to maximum component being 1.0
-	float maxComponent = MAX(MAX(r, g), b);
-	if (maxComponent > 1.0) {
-		r /= maxComponent;
-		g /= maxComponent;
-		b /= maxComponent;
-	}
-
+	const float Y = (level / (float)ZCL_LEVEL_ATTR_MAX_LEVEL); // This is luminance, but used as brightness
+	const float X = (Y / y) * x;
+	const float Z = (Y / y) * z;
+	
+	// SRGB http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+	float r = X * 3.2404542f - Y * -1.5371385f - Z * 0.4985314f;
+	float g = -X * 0.9692660f + Y * 1.8760108f + Z * 0.0415560f;
+	float b = X * 0.0556434f - Y * 0.2040259f + Z * 1.0572252f;
+	
 	// Apply LINEAR => SRGB Gamma correction
 	r = LINEAR_TO_SRGB_GAMMA_CORRECTION(r);
 	g = LINEAR_TO_SRGB_GAMMA_CORRECTION(g);
 	b = LINEAR_TO_SRGB_GAMMA_CORRECTION(b);
-
-	// Normalize again to avoid out of range
-	maxComponent =  MAX(MAX(r, g), b);
-	if (maxComponent > 1.0) {
-		r /= maxComponent;
-		g /= maxComponent;
-		b /= maxComponent;
-	}
-
-	// Enforce the lower and upper bounds
-	r = ENFORCE_BOUNDS_FLOAT(0.0f, r * 255, 255.0f);
-	g = ENFORCE_BOUNDS_FLOAT(0.0f, g * 255, 255.0f);
-	b = ENFORCE_BOUNDS_FLOAT(0.0f, b * 255, 255.0f);
-
-	hwLight_colorUpdate_RGB(roundu8(r), roundu8(g), roundu8(b));
+	
+    hwLight_colorUpdate_RGB(ENFORCE_BOUNDS_U8(0, round(r * 255), 255), ENFORCE_BOUNDS_U8(0, round(g * 255), 255), ENFORCE_BOUNDS_U8(0, round(b * 255) , 255));
 }
 
 /*********************************************************************
