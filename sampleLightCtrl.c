@@ -384,8 +384,8 @@ float LINEAR_TO_SRGB_GAMMA_CORRECTION(const float part)
 
 void hwLight_colorUpdate_XY2RGB(u16 xI, u16 yI, u8 level)
 {
-	float x = xI / 65535.0f;
-	float y = yI / 65535.0f;
+	float x = xI / 65536.0f;
+	float y = yI / 65536.0f;
 
 	// This does not locate the closest point in the gamma spectrum of the lamps. possible #todo
 	const float z = 1.f - x - y;
