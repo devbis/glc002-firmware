@@ -628,7 +628,7 @@ static void sampleLight_moveToHueAndSaturationProcess(zcl_colorCtrlMoveToHueAndS
  * HEAVY TODO BELOW this is entirely unimplemented and causing issues if XY support is indicated!
  * /
 
-/*********************************************************************
+/*
  * @fn      sampleLight_moveToColorProcess
  *
  * @brief

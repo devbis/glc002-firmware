@@ -98,6 +98,7 @@ void buttonKeepPressed(u8 btNum)
 	}
 }
 
+volatile u8 G_pwmTestPressed = 0;
 void buttonShortPressed(u8 btNum)
 {
 	if (btNum == VK_SW1)
@@ -124,14 +125,20 @@ void buttonShortPressed(u8 btNum)
 
 		// todo remove test for color order
 		sampleLight_onoff(ZCL_ONOFF_STATUS_OFF);
-		hwLight_colorUpdate_RGB(255,0,0);
-		WaitMs(250);
-		hwLight_colorUpdate_RGB(0,255,0);
-		WaitMs(250);
-		hwLight_colorUpdate_RGB(0,0,255);
-		WaitMs(250);
-		sampleLight_onoff(ZCL_ONOFF_STATUS_ON);
 
+		if (G_pwmTestPressed == 0) {
+			hwLight_colorUpdate_RGB(255,0,0);
+			G_pwmTestPressed++;
+		} else if (G_pwmTestPressed == 1) {
+			hwLight_colorUpdate_RGB(0,255,0);
+			G_pwmTestPressed++;
+		} else if (G_pwmTestPressed == 2) {
+			hwLight_colorUpdate_RGB(0,0,255);
+			G_pwmTestPressed++;
+		} else {
+			sampleLight_onoff(ZCL_ONOFF_STATUS_ON);
+			G_pwmTestPressed = 0;
+		}
 	}
 }
 
