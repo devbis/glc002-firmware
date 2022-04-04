@@ -31,6 +31,7 @@
 #include "zcl_include.h"
 #include "sampleLight.h"
 #include "app_ui.h"
+#include "sampleLightCtrl.h"
 
 /**********************************************************************
  * LOCAL CONSTANTS
@@ -117,9 +118,20 @@ void buttonShortPressed(u8 btNum)
 	else if (btNum == VK_SW2)
 	{
 		/* toggle local permit Joining */
-		static u8 duration = 0;
-		duration = duration ? 0 : 0xff;
-		zb_nlmePermitJoiningRequest(duration);
+		//static u8 duration = 0;
+		//duration = duration ? 0 : 0xff;
+		//zb_nlmePermitJoiningRequest(duration);
+
+		// todo remove test for color order
+		sampleLight_onoff(ZCL_ONOFF_STATUS_OFF);
+		hwLight_colorUpdate_RGB(255,0,0);
+		WaitMs(250);
+		hwLight_colorUpdate_RGB(0,255,0);
+		WaitMs(250);
+		hwLight_colorUpdate_RGB(0,0,255);
+		WaitMs(250);
+		sampleLight_onoff(ZCL_ONOFF_STATUS_ON);
+
 	}
 }
 
