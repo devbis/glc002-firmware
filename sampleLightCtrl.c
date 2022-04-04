@@ -34,7 +34,7 @@
 /**********************************************************************
  * LOCAL CONSTANTS
  */
-#define PWM_FREQUENCY 1000 // 1KHz
+#define PWM_FREQUENCY 3000 // 3KHz
 #define PWM_FULL_DUTYCYCLE 100
 #define PMW_MAX_TICK (PWM_CLOCK_SOURCE / PWM_FREQUENCY)
 
@@ -230,13 +230,13 @@ void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
  *
  * @return  None
  */
-void hsvToRGB(u8 hue, u8 saturation, u8 level, u8 *R, u8 *G, u8 *B)
+void hsvToRGB(u16 hue, u8 saturation, u8 level, u8 *R, u8 *G, u8 *B, bool enhanced)
 {
 	u8 region;
 	u8 remainder;
 	u8 p, q, t;
 
-	u16 rHue = (u16)hue * 360 / ZCL_COLOR_ATTR_HUE_MAX;
+	u16 rHue = (u32)hue * 360 / (enhanced ? ZCL_COLOR_ATTR_ENHANCED_HUE_MAX : ZCL_COLOR_ATTR_HUE_MAX);
 	u8 rS = saturation;
 	u8 rV = level;
 
@@ -309,18 +309,20 @@ void hsvToRGB(u8 hue, u8 saturation, u8 level, u8 *R, u8 *G, u8 *B)
  * @param   hue			-	hue attribute value
  * 			saturation	-	saturation attribute value
  * 			level		-	level attribute value
+ * 			bool		-   whether the enhanced calculation should be used or not
  *
  * @return  None
  */
-void hwLight_colorUpdate_HSV2RGB(u8 hue, u8 saturation, u8 level)
+void hwLight_colorUpdate_HSV2RGB(u16 hue, u8 saturation, u8 level, bool enhanced)
 {
 	u8 R = 0;
 	u8 G = 0;
 	u8 B = 0;
 
-	level = (level < 0x10) ? 0x10 : level;
+	// No idea why this is here, lets see what happens with a more minimal value
+	level = (level < 0x01) ? 0x01 : level;
 
-	hsvToRGB(hue, saturation, level, &R, &G, &B);
+	hsvToRGB(hue, saturation, level, &R, &G, &B, enhanced);
 
 	hwLight_colorUpdate_RGB(R, G, B);
 }

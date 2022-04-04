@@ -57,6 +57,10 @@ typedef struct
 	u32 currentX256;
 	u32 currentY256;
 	u16 xyRemainingTime;
+
+	u32 currentEnhancedHue256;
+	s32 stepEnhancedHue256;
+	u16 enhancedHueRemainingTime;
 } zcl_colorInfo_t;
 
 /**********************************************************************
@@ -82,6 +86,10 @@ static zcl_colorInfo_t colorInfo = {
 	.currentX256 = 0,
 	.currentY256 = 0,
 	.xyRemainingTime = 0,
+
+	.currentEnhancedHue256 = 0,
+	.stepEnhancedHue256 = 0,
+	.enhancedHueRemainingTime = 0,
 };
 
 static ev_timer_event_t *colorTimerEvt = NULL;
@@ -174,9 +182,11 @@ void sampleLight_updateColor(void)
 	{
 		hwLight_colorUpdate_XY2RGB(pColor->currentX, pColor->currentY, pLevel->curLevel);
 	}
-	else if (pColor->colorMode == ZCL_COLOR_MODE_CURRENT_HUE_SATURATION || pColor->enhancedColorMode == ZCL_ENHANCED_COLOR_MODE_CURRENT_HUE_SATURATION)
+	else if (pColor->colorMode == ZCL_COLOR_MODE_CURRENT_HUE_SATURATION)
 	{
-		hwLight_colorUpdate_HSV2RGB(pColor->currentHue, pColor->currentSaturation, pLevel->curLevel);
+		// If we are in the enhanced mode, we have to make use of the enhanced hue values!
+		bool enhanced = pColor->enhancedColorMode == ZCL_ENHANCED_COLOR_MODE_CURRENT_HUE_SATURATION;
+		hwLight_colorUpdate_HSV2RGB(enhanced ? pColor->enhancedCurrentHue : pColor->currentHue, pColor->currentSaturation, pLevel->curLevel, enhanced);
 	}
 	else if (pColor->colorMode == ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS)
 	{
@@ -211,6 +221,12 @@ static s32 sampleLight_colorTimerEvtCb(void *arg)
 			light_applyUpdate(&pColor->currentHue, &colorInfo.currentHue256, &colorInfo.stepHue256, &colorInfo.hueRemainingTime,
 							  ZCL_COLOR_ATTR_HUE_MIN, ZCL_COLOR_ATTR_HUE_MAX, TRUE);
 		}
+
+		if (colorInfo.enhancedHueRemainingTime) 
+		{
+			light_applyUpdate_16(&pColor->enhancedCurrentHue, &colorInfo.currentEnhancedHue256, &colorInfo.stepEnhancedHue256, &colorInfo.enhancedHueRemainingTime,
+							 ZCL_COLOR_ATTR_ENHANCED_HUE_MIN, ZCL_COLOR_ATTR_ENHANCED_HUE_MAX, TRUE);
+		}
 	}
 	else if (pColor->colorMode == ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS)
 	{
@@ -228,7 +244,7 @@ static s32 sampleLight_colorTimerEvtCb(void *arg)
 								&colorInfo.xyRemainingTime,	ZCL_COLOR_ATTR_XY_MIN, ZCL_COLOR_ATTR_XY_MAX, FALSE);
 		}
 	}
-	if (colorInfo.saturationRemainingTime || colorInfo.hueRemainingTime || colorInfo.colorTempRemainingTime || colorInfo.xyRemainingTime)
+	if (colorInfo.saturationRemainingTime || colorInfo.hueRemainingTime || colorInfo.enhancedHueRemainingTime || colorInfo.colorTempRemainingTime || colorInfo.xyRemainingTime)
 	{
 		return 0;
 	}
@@ -725,18 +741,59 @@ static void sampleLight_enhancedMoveToHueProcess(zcl_colorCtrlEnhancedMoveToHueC
 	pColor->colorMode = ZCL_COLOR_MODE_CURRENT_HUE_SATURATION;
 	pColor->enhancedColorMode = ZCL_ENHANCED_COLOR_MODE_CURRENT_HUE_SATURATION;
 
+	colorInfo.currentEnhancedHue256 = (u32)(pColor->enhancedCurrentHue) << 8;
+
+	s32 hueDiff = (s32)cmd->enhancedHue - pColor->enhancedCurrentHue;
+
 	switch (cmd->direction)
 	{
 	case COLOR_CTRL_DIRECTION_SHORTEST_DISTANCE:
+		if (hueDiff > (ZCL_COLOR_ATTR_ENHANCED_HUE_MAX / 2))
+		{
+			hueDiff -= (ZCL_COLOR_ATTR_ENHANCED_HUE_MAX + 1);
+		}
+		else if (hueDiff < -ZCL_COLOR_ATTR_ENHANCED_HUE_MAX / 2)
+		{
+			hueDiff += (ZCL_COLOR_ATTR_ENHANCED_HUE_MAX + 1);
+		}
 		break;
 	case COLOR_CTRL_DIRECTION_LONGEST_DISTANCE:
+		if ((hueDiff > 0) && (hueDiff < (ZCL_COLOR_ATTR_ENHANCED_HUE_MAX / 2)))
+		{
+			hueDiff -= (ZCL_COLOR_ATTR_ENHANCED_HUE_MAX + 1);
+		}
+		else if ((hueDiff < 0) && (hueDiff > -ZCL_COLOR_ATTR_ENHANCED_HUE_MAX / 2))
+		{
+			hueDiff += (ZCL_COLOR_ATTR_ENHANCED_HUE_MAX + 1);
+		}
 		break;
 	case COLOR_CTRL_DIRECTION_UP:
+		if (hueDiff < 0)
+		{
+			hueDiff += ZCL_COLOR_ATTR_ENHANCED_HUE_MAX;
+		}
 		break;
 	case COLOR_CTRL_DIRECTION_DOWN:
+		if (hueDiff > 0)
+		{
+			hueDiff -= ZCL_COLOR_ATTR_ENHANCED_HUE_MAX;
+		}
 		break;
 	default:
 		break;
+	}
+
+	colorInfo.enhancedHueRemainingTime = (cmd->transitionTime == 0) ? 1 : INTERP_STEPS_FROM_REM_TIME(cmd->transitionTime, ZCL_COLOR_CHANGE_INTERVAL);
+	colorInfo.stepEnhancedHue256 = ((s32)hueDiff) << 8;
+	colorInfo.stepEnhancedHue256 /= (s32)colorInfo.enhancedHueRemainingTime;
+
+	light_applyUpdate_16(&pColor->enhancedCurrentHue, &colorInfo.currentEnhancedHue256, &colorInfo.stepEnhancedHue256, &colorInfo.enhancedHueRemainingTime,
+					  ZCL_COLOR_ATTR_ENHANCED_HUE_MIN, ZCL_COLOR_ATTR_ENHANCED_HUE_MAX, TRUE);
+	
+	sampleLight_colorTimerStop();
+	if (colorInfo.enhancedHueRemainingTime)
+	{
+		colorTimerEvt = TL_ZB_TIMER_SCHEDULE(sampleLight_colorTimerEvtCb, NULL, ZCL_COLOR_CHANGE_INTERVAL);
 	}
 }
 
