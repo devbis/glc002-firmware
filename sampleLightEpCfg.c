@@ -271,6 +271,7 @@ zcl_lightColorCtrlAttr_t g_zcl_colorCtrlAttrs =
 		.currentSaturation = 0x00,
 		.currentX = 0x616b,
 		.currentY = 0x607d,
+		.enhancedCurrentHue = 0x0000,
 		.colorLoopActive = 0x00,
 		.colorLoopDirection = 0x00,
 		.colorLoopTime = 0x0019,
@@ -292,6 +293,7 @@ const zclAttrInfo_t lightColorCtrl_attrTbl[] =
 		{ZCL_ATTRID_CURRENT_X, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8 *)&g_zcl_colorCtrlAttrs.currentX},
 		{ZCL_ATTRID_CURRENT_Y, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8 *)&g_zcl_colorCtrlAttrs.currentY},
 		{ZCL_ATTRID_CURRENT_HUE, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8 *)&g_zcl_colorCtrlAttrs.currentHue},
+		{ZCL_ATTRID_ENHANCED_CURRENT_HUE, ZCL_DATA_TYPE_UINT16, ACCESS_CONTROL_READ, (u8 *)&g_zcl_colorCtrlAttrs.enhancedCurrentHue},
 		{ZCL_ATTRID_CURRENT_SATURATION, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8 *)&g_zcl_colorCtrlAttrs.currentSaturation},
 		{ZCL_ATTRID_COLOR_LOOP_ACTIVE, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8 *)&g_zcl_colorCtrlAttrs.colorLoopActive},
 		{ZCL_ATTRID_COLOR_LOOP_DIRECTION, ZCL_DATA_TYPE_UINT8, ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8 *)&g_zcl_colorCtrlAttrs.colorLoopDirection},
@@ -385,7 +387,7 @@ nv_sts_t zcl_onOffAttr_restore(void)
 	{
 		return st;
 	}
-
+		
 	g_zcl_onOffAttrs.startUpOnOff = zcl_nv_onOff.startUp;
 	g_zcl_onOffAttrs.onOff = zcl_nv_onOff.lastState;
 #else

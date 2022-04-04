@@ -358,7 +358,7 @@ static void sampleLight_moveToHueProcess(zcl_colorCtrlMoveToHueCmd_t *cmd)
 		break;
 	}
 
-	colorInfo.hueRemainingTime = (cmd->transitionTime == 0) ? 1 : cmd->transitionTime;
+	colorInfo.hueRemainingTime = (cmd->transitionTime == 0) ? 1 : INTERP_STEPS_FROM_REM_TIME(cmd->transitionTime, ZCL_COLOR_CHANGE_INTERVAL);
 	colorInfo.stepHue256 = ((s32)hueDiff) << 8;
 	colorInfo.stepHue256 /= (s32)colorInfo.hueRemainingTime;
 
@@ -440,7 +440,7 @@ static void sampleLight_stepHueProcess(zcl_colorCtrlStepHueCmd_t *cmd)
 
 	colorInfo.currentHue256 = (u16)(pColor->currentHue) << 8;
 
-	colorInfo.hueRemainingTime = (cmd->transitionTime == 0) ? 1 : cmd->transitionTime;
+	colorInfo.hueRemainingTime = (cmd->transitionTime == 0) ? 1 : INTERP_STEPS_FROM_REM_TIME(cmd->transitionTime, ZCL_COLOR_CHANGE_INTERVAL);
 
 	colorInfo.stepHue256 = (((s32)cmd->stepSize) << 8) / colorInfo.hueRemainingTime;
 
@@ -485,7 +485,7 @@ static void sampleLight_moveToSaturationProcess(zcl_colorCtrlMoveToSaturationCmd
 
 	colorInfo.currentSaturation256 = (u16)(pColor->currentSaturation) << 8;
 
-	colorInfo.saturationRemainingTime = (cmd->transitionTime == 0) ? 1 : cmd->transitionTime;
+	colorInfo.saturationRemainingTime = (cmd->transitionTime == 0) ? 1 : INTERP_STEPS_FROM_REM_TIME(cmd->transitionTime, ZCL_COLOR_CHANGE_INTERVAL);
 
 	colorInfo.stepSaturation256 = ((s32)(cmd->saturation - pColor->currentSaturation)) << 8;
 	colorInfo.stepSaturation256 /= (s32)colorInfo.saturationRemainingTime;
@@ -568,7 +568,7 @@ static void sampleLight_stepSaturationProcess(zcl_colorCtrlStepSaturationCmd_t *
 
 	colorInfo.currentSaturation256 = (u16)(pColor->currentSaturation) << 8;
 
-	colorInfo.saturationRemainingTime = (cmd->transitionTime == 0) ? 1 : cmd->transitionTime;
+	colorInfo.saturationRemainingTime = (cmd->transitionTime == 0) ? 1 : INTERP_STEPS_FROM_REM_TIME(cmd->transitionTime, ZCL_COLOR_CHANGE_INTERVAL);
 
 	colorInfo.stepSaturation256 = (((s32)cmd->stepSize) << 8) / colorInfo.saturationRemainingTime;
 
@@ -645,7 +645,7 @@ static void sampleLight_moveToColorProcess(zcl_colorCtrlMoveToColorCmd_t *cmd)
 	colorInfo.currentX256 = (u16)(pColor->currentX) << 8;
 	colorInfo.currentY256 = (u16)(pColor->currentY) << 8;
 
-	u16 remTime = (cmd->transitionTime == 0) ? 1 : cmd->transitionTime;
+	u16 remTime = (cmd->transitionTime == 0) ? 1 : INTERP_STEPS_FROM_REM_TIME(cmd->transitionTime, ZCL_COLOR_CHANGE_INTERVAL);
 	colorInfo.xyRemainingTime = remTime;
 
 	colorInfo.stepX256 = ((s32)(cmd->colorX - pColor->currentX)) << 8;
@@ -892,7 +892,7 @@ static void sampleLight_moveToColorTemperatureProcess(zcl_colorCtrlMoveToColorTe
 
 	colorInfo.currentColorTemp256 = (u32)(pColor->colorTemperatureMireds) << 8;
 
-	colorInfo.colorTempRemainingTime = (cmd->transitionTime == 0) ? 1 : cmd->transitionTime;
+	colorInfo.colorTempRemainingTime = (cmd->transitionTime == 0) ? 1 : INTERP_STEPS_FROM_REM_TIME(cmd->transitionTime, ZCL_COLOR_CHANGE_INTERVAL);
 
 	colorInfo.stepColorTemp256 = ((s32)(cmd->colorTemperature - pColor->colorTemperatureMireds)) << 8;
 	colorInfo.stepColorTemp256 /= (s32)colorInfo.colorTempRemainingTime;
@@ -1015,7 +1015,7 @@ static void sampleLight_stepColorTemperatureProcess(zcl_colorCtrlStepColorTemper
 
 	colorInfo.currentColorTemp256 = (u32)(pColor->colorTemperatureMireds) << 8;
 
-	colorInfo.colorTempRemainingTime = (cmd->transitionTime == 0) ? 1 : cmd->transitionTime;
+	colorInfo.colorTempRemainingTime = (cmd->transitionTime == 0) ? 1 : INTERP_STEPS_FROM_REM_TIME(cmd->transitionTime, ZCL_COLOR_CHANGE_INTERVAL);
 
 	colorInfo.stepColorTemp256 = (((s32)cmd->stepSize) << 8) / colorInfo.colorTempRemainingTime;
 

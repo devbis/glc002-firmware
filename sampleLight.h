@@ -35,6 +35,11 @@
  */
 #define ZCL_LEVEL_CHANGE_INTERVAL 20 // Step 50 times a second, every 20ms
 #define ZCL_COLOR_CHANGE_INTERVAL 20 // see above
+#define ZCL_REMAINING_TIME_INTERVAL 100 // 1/10th of a second according to the zigbee spec
+
+// Map the required time to our internal steps
+#define INTERP_STEPS_FROM_REM_TIME(remTime, base) ((remTime * ZCL_REMAINING_TIME_INTERVAL)/base)
+
 
 /**********************************************************************
  * TYPEDEFS
