@@ -124,8 +124,6 @@ void buttonShortPressed(u8 btNum)
 		//zb_nlmePermitJoiningRequest(duration);
 
 		// todo remove test for color order
-		sampleLight_onoff(ZCL_ONOFF_STATUS_OFF);
-
 		if (G_pwmTestPressed == 0) {
 			hwLight_colorUpdate_RGB(255,0,0);
 			G_pwmTestPressed++;
@@ -136,7 +134,6 @@ void buttonShortPressed(u8 btNum)
 			hwLight_colorUpdate_RGB(0,0,255);
 			G_pwmTestPressed++;
 		} else {
-			sampleLight_onoff(ZCL_ONOFF_STATUS_ON);
 			G_pwmTestPressed = 0;
 		}
 	}
