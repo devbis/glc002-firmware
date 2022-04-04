@@ -30,7 +30,6 @@
 #include "zcl_include.h"
 #include "sampleLight.h"
 #include "sampleLightCtrl.h"
-#include <math.h>
 
 /**********************************************************************
  * LOCAL CONSTANTS
@@ -345,34 +344,72 @@ static float ENFORCE_BOUNDS_FLOAT(float lowerBound, float num, float upperBound)
 															: num;
 }
 
+/*
+	A horrible power function for floats
+*/
+static float fpow(float x, float y) {
+	float result = 1;
+	for(int i = 0; i < y; ++i)
+	{
+		result *= x;
+	}
+
+	return result;
+}
+
 float LINEAR_TO_SRGB_GAMMA_CORRECTION(const float part)
 {
-	return part <= 0.0031308 ? 12.92 * part : 1.055 * pow(part, 1.0 / 2.4) - 0.055;
+	return part <= 0.0031308f ? 12.92f * part : 1.055f * fpow(part, 1.0f / 2.4f) - 0.055f;
 }
+
+#define MAX(x,y) ((x) > (y) ? (x) : (y))
+#define MIN(x,y) ((x) < (y) ? (x) : (y))
+#define roundu8(a) (u8) (a+0.5) 
 
 void hwLight_colorUpdate_XY2RGB(u16 xI, u16 yI, u8 level)
 {
-	float x = xI / 65536.f;
-	float y = yI / 65536.f;
+	float x = xI / (float)ZCL_COLOR_ATTR_XY_MAX;
+	float y = yI / (float)ZCL_COLOR_ATTR_XY_MAX;
 
 	// This does not locate the closest point in the gamma spectrum of the lamps. possible #todo
 	const float z = 1 - x - y;
 
-	const float Y = level / ZCL_LEVEL_ATTR_MAX_LEVEL; // This is luminance, but used as brightness
+	const float Y = level / (float)ZCL_LEVEL_ATTR_MAX_LEVEL; // This is luminance, but used as brightness
 	const float X = ((Y) / y) * x;
 	const float Z = ((Y) / y) * z;
 
 	// D65 BT.709 conversion https://en.wikipedia.org/wiki/SRGB
-	float r = X * 1.656492 - Y * 0.354851 - Z * 0.255038;
-	float g = -X * 0.707196 + Y * 1.655397 + Z * 0.036152;
-	float b = X * 0.051713 - Y * 0.121364 + Z * 1.011530;
+	float r = X * 1.656492f - Y * 0.354851f - Z * 0.255038f;
+	float g = -X * 0.707196f + Y * 1.655397f + Z * 0.036152f;
+	float b = X * 0.051713f - Y * 0.121364f + Z * 1.011530f;
+
+	// Normalize to maximum component being 1.0
+	float maxComponent = MAX(MAX(r, g), b);
+	if (maxComponent > 1.0) {
+		r /= maxComponent;
+		g /= maxComponent;
+		b /= maxComponent;
+	}
+
+	// Apply LINEAR => SRGB Gamma correction
+	r = LINEAR_TO_SRGB_GAMMA_CORRECTION(r);
+	g = LINEAR_TO_SRGB_GAMMA_CORRECTION(g);
+	b = LINEAR_TO_SRGB_GAMMA_CORRECTION(b);
+
+	// Normalize again to avoid out of range
+	maxComponent =  MAX(MAX(r, g), b);
+	if (maxComponent > 1.0) {
+		r /= maxComponent;
+		g /= maxComponent;
+		b /= maxComponent;
+	}
 
 	// Enforce the lower and upper bounds
-	r = ENFORCE_BOUNDS_FLOAT(0.0, r * 255, 255.0);
-	g = ENFORCE_BOUNDS_FLOAT(0.0, g * 255, 255.0);
-	b = ENFORCE_BOUNDS_FLOAT(0.0, b * 255, 255.0);
+	r = ENFORCE_BOUNDS_FLOAT(0.0f, r * 255, 255.0f);
+	g = ENFORCE_BOUNDS_FLOAT(0.0f, g * 255, 255.0f);
+	b = ENFORCE_BOUNDS_FLOAT(0.0f, b * 255, 255.0f);
 
-	hwLight_colorUpdate_RGB((u8)r, (u8)g, (u8)b);
+	hwLight_colorUpdate_RGB(roundu8(r), roundu8(g), roundu8(b));
 }
 
 /*********************************************************************
