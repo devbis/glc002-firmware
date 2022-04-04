@@ -43,6 +43,7 @@ void light_adjust(void);
 void light_fresh(void);
 void light_applyUpdate(u8 *curLevel, u16 *curLevel256, s32 *stepLevel256, u16 *remainingTime, u8 minLevel, u8 maxLevel, bool wrap);
 void light_applyUpdate_16(u16 *curLevel, u32 *curLevel256, s32 *stepLevel256, u16 *remainingTime, u16 minLevel, u16 maxLevel, bool wrap);
+void light_applyXYUpdate_16(u16 *curX, u32 *curX256, s32 *stepX256, u16 *curY, u32 *curY256, s32 *stepY256, u16 *remainingTime, u16 minLevel, u16 maxLevel, bool wrap);
 
 void light_blink_start(u8 times, u16 ledOnTime, u16 ledOffTime);
 void light_blink_stop(void);

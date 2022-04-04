@@ -501,17 +501,8 @@ void light_applyUpdate(u8 *curLevel, u16 *curLevel256, s32 *stepLevel256, u16 *r
 	light_fresh();
 }
 
-/*********************************************************************
- * @fn      light_applyUpdate_16
- *
- * @brief
- *
- * @param
- *
- * @return  None
- */
-void light_applyUpdate_16(u16 *curLevel, u32 *curLevel256, s32 *stepLevel256, u16 *remainingTime, u16 minLevel, u16 maxLevel, bool wrap)
-{
+
+void light_computeUpdate_16(u16 *curLevel, u32 *curLevel256, s32 *stepLevel256, u16 minLevel, u16 maxLevel, bool wrap) {
 	if ((*stepLevel256 > 0) && ((((s32)*curLevel256 + *stepLevel256) / 256) > maxLevel))
 	{
 		*curLevel256 = (wrap) ? ((u32)minLevel * 256 + ((*curLevel256 + *stepLevel256) - (u32)maxLevel * 256) - 256)
@@ -535,11 +526,57 @@ void light_applyUpdate_16(u16 *curLevel, u32 *curLevel256, s32 *stepLevel256, u1
 	{
 		*curLevel = *curLevel256 / 256;
 	}
+}
+
+/*********************************************************************
+ * @fn      light_applyUpdate_16
+ *
+ * @brief
+ *
+ * @param
+ *
+ * @return  None
+ */
+void light_applyUpdate_16(u16 *curLevel, u32 *curLevel256, s32 *stepLevel256, u16 *remainingTime, u16 minLevel, u16 maxLevel, bool wrap)
+{
+	light_computeUpdate_16(curLevel, curLevel256, stepLevel256, minLevel, maxLevel, wrap);
 
 	if (*remainingTime == 0)
 	{
 		*curLevel256 = ((u32)*curLevel) * 256;
 		*stepLevel256 = 0;
+	}
+	else if (*remainingTime != 0xFFFF)
+	{
+		*remainingTime = *remainingTime - 1;
+	}
+
+	light_fresh();
+}
+
+/*********************************************************************
+ * @fn      light_applyXYUpdate_16
+ *
+ * @brief   Updates the X and Y value (or two independent values at once)
+ *
+ * @param
+ *
+ * @return  None
+ */
+void light_applyXYUpdate_16(u16 *curX, u32 *curX256, s32 *stepX256, u16 *curY, u32 *curY256, s32 *stepY256, u16 *remainingTime, u16 minLevel, u16 maxLevel, bool wrap)
+{
+	// First update both components at once
+	light_computeUpdate_16(curX, curX256, stepX256, minLevel, maxLevel, wrap);
+	light_computeUpdate_16(curY, curY256, stepY256, minLevel, maxLevel, wrap);
+
+	// Then count down the single time
+	if (*remainingTime == 0)
+	{
+		*curX256 = ((u32)*curX) * 256;
+		*stepX256 = 0;
+
+		*curY256 = ((u32)*curY) * 256;
+		*stepY256 = 0;
 	}
 	else if (*remainingTime != 0xFFFF)
 	{

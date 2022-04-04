@@ -265,8 +265,8 @@ zcl_lightColorCtrlAttr_t g_zcl_colorCtrlAttrs =
 		.colorMode = ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS,
 		.options = 0,
 		.enhancedColorMode = ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS,
-		.colorCapabilities = ZCL_COLOR_CAPABILITIES_BIT_COLOR_TEMPERATURE | ZCL_COLOR_CAPABILITIES_BIT_X_Y_ATTRIBUTES | ZCL_COLOR_CAPABILITIES_BIT_HUE_SATURATION,
 		.numOfPrimaries = 0,
+		.colorCapabilities = ZCL_COLOR_CAPABILITIES_BIT_COLOR_TEMPERATURE | ZCL_COLOR_CAPABILITIES_BIT_X_Y_ATTRIBUTES | ZCL_COLOR_CAPABILITIES_BIT_HUE_SATURATION,
 		.currentHue = 0x00,
 		.currentSaturation = 0x00,
 		.currentX = 0x616b,
@@ -346,10 +346,11 @@ nv_sts_t zcl_onOffAttr_save(void)
 
 	st = nv_flashReadNew(1, NV_MODULE_ZCL, NV_ITEM_ZCL_ON_OFF, sizeof(zcl_nv_onOff_t), (u8 *)&zcl_nv_onOff);
 
-	bool onOffAttrsDiffer = st == NV_ITEM_NOT_FOUND || 
-		(st == NV_SUCC && (zcl_nv_onOff.startUp != g_zcl_onOffAttrs.startUpOnOff || zcl_nv_onOff.lastState != g_zcl_onOffAttrs.onOff));
+	bool onOffAttrsDiffer = st == NV_ITEM_NOT_FOUND ||
+							(st == NV_SUCC && (zcl_nv_onOff.startUp != g_zcl_onOffAttrs.startUpOnOff || zcl_nv_onOff.lastState != g_zcl_onOffAttrs.onOff));
 
-	if (onOffAttrsDiffer) {
+	if (onOffAttrsDiffer)
+	{
 		zcl_nv_onOff.startUp = g_zcl_onOffAttrs.startUpOnOff;
 		zcl_nv_onOff.lastState = g_zcl_onOffAttrs.onOff;
 		st = nv_flashWriteNew(1, NV_MODULE_ZCL, NV_ITEM_ZCL_ON_OFF, sizeof(zcl_nv_onOff_t), (u8 *)&zcl_nv_onOff);
@@ -384,7 +385,7 @@ nv_sts_t zcl_onOffAttr_restore(void)
 	{
 		return st;
 	}
-		
+
 	g_zcl_onOffAttrs.startUpOnOff = zcl_nv_onOff.startUp;
 	g_zcl_onOffAttrs.onOff = zcl_nv_onOff.lastState;
 #else
@@ -412,10 +413,10 @@ nv_sts_t zcl_levelAttr_save(void)
 
 	st = nv_flashReadNew(1, NV_MODULE_ZCL, NV_ITEM_ZCL_LEVEL, sizeof(zcl_nv_level_t), (u8 *)&zcl_nv_level);
 
-	bool levelAttrsNeedsUpdate = st == NV_ITEM_NOT_FOUND 
-		|| (st == NV_SUCC && (zcl_nv_level.startUp != g_zcl_levelAttrs.startUpCurrentLevel || zcl_nv_level.lastLevel != g_zcl_levelAttrs.curLevel));
+	bool levelAttrsNeedsUpdate = st == NV_ITEM_NOT_FOUND || (st == NV_SUCC && (zcl_nv_level.startUp != g_zcl_levelAttrs.startUpCurrentLevel || zcl_nv_level.lastLevel != g_zcl_levelAttrs.curLevel));
 
-	if (levelAttrsNeedsUpdate) {
+	if (levelAttrsNeedsUpdate)
+	{
 		zcl_nv_level.startUp = g_zcl_levelAttrs.startUpCurrentLevel;
 		zcl_nv_level.lastLevel = g_zcl_levelAttrs.curLevel;
 
@@ -479,10 +480,10 @@ nv_sts_t zcl_colorCtrlAttr_save(void)
 	zcl_lightColorCtrlAttr_t c = g_zcl_colorCtrlAttrs;
 
 	// Check if the item does not exist in nvram, or the values differ
-	bool colorAttrsDiffer = st == NV_ITEM_NOT_FOUND 
-		|| (st == NV_SUCC && (nv.startUpMireds != c.startUpColorTemperatureMireds || nv.lastMireds != c.colorTemperatureMireds));
+	bool colorAttrsDiffer = st == NV_ITEM_NOT_FOUND || (st == NV_SUCC && (nv.startUpMireds != c.startUpColorTemperatureMireds || nv.lastMireds != c.colorTemperatureMireds));
 
-	if (colorAttrsDiffer) {
+	if (colorAttrsDiffer)
+	{
 		nv.startUpMireds = c.startUpColorTemperatureMireds;
 		nv.lastMireds = c.colorTemperatureMireds;
 		st = nv_flashWriteNew(1, NV_MODULE_ZCL, NV_ITEM_ZCL_COLOR_CTRL, sizeof(zcl_nv_colorCtrl_t), (u8 *)&nv);
