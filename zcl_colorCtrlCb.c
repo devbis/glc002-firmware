@@ -219,6 +219,7 @@ static s32 sampleLight_colorTimerEvtCb(void *arg)
 {
 	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 
+	// It is safe to use the enhanced mode here, because we control it ourselves.
 	if ((pColor->enhancedColorMode == ZCL_COLOR_MODE_CURRENT_HUE_SATURATION) ||
 		(pColor->enhancedColorMode == ZCL_ENHANCED_COLOR_MODE_CURRENT_HUE_SATURATION))
 	{
@@ -673,8 +674,8 @@ static void sampleLight_moveToColorProcess(zcl_colorCtrlMoveToColorCmd_t *cmd)
 	pColor->colorMode = ZCL_COLOR_MODE_CURRENT_X_Y;
 	pColor->enhancedColorMode = ZCL_COLOR_MODE_CURRENT_X_Y;
 
-	colorInfo.currentX256 = (u16)(pColor->currentX) << 8;
-	colorInfo.currentY256 = (u16)(pColor->currentY) << 8;
+	colorInfo.currentX256 = (u32)(pColor->currentX) << 8;
+	colorInfo.currentY256 = (u32)(pColor->currentY) << 8;
 
 	u16 remTime = (cmd->transitionTime == 0) ? 1 : INTERP_STEPS_FROM_REM_TIME(cmd->transitionTime, ZCL_COLOR_CHANGE_INTERVAL);
 	colorInfo.xyRemainingTime = remTime;

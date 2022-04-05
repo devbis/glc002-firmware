@@ -327,6 +327,13 @@ void hwLight_colorUpdate_HSV2RGB(u16 hue, u8 saturation, u8 level, bool enhanced
 	hwLight_colorUpdate_RGB(R, G, B);
 }
 
+/**
+ * @brief Updates the PWM channel duty based on RGB colors.
+ * 
+ * @param R the red component from 0-255
+ * @param G the green component from 0-255
+ * @param B the blue component from 0-255
+ */
 void hwLight_colorUpdate_RGB(u8 R, u8 G, u8 B)
 {
 	u16 gammaCorrectR = ((u16)R * R) / ZCL_LEVEL_ATTR_MAX_LEVEL;
@@ -377,7 +384,8 @@ float _fsqrt(float x, int n) {
 float LINEAR_TO_SRGB_GAMMA_CORRECTION(const float part)
 {
 	// Optimization for embedded devices without math libraries: a ^ (m / n) == nth_root(a) ^ m
-	return part <= 0.0031308f ? 12.92f * part : 1.055f * _fpow(_fsqrt(part, 12), 5) - 0.055f;
+	// This uses a gamma value of 2.2 hence the (5/11)
+	return part <= 0.0031308f ? 12.92f * part : 1.055f * _fpow(_fsqrt(part, 11), 5) - 0.055f;
 }
 
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
