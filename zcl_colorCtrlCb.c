@@ -31,6 +31,7 @@
 #include "sampleLight.h"
 #include "sampleLightCtrl.h"
 
+#include "app_ui.h"
 #ifdef ZCL_LIGHT_COLOR_CONTROL
 
 /**********************************************************************
@@ -113,18 +114,18 @@ void sampleLight_colorInit(void)
 {
 	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 
-	pColor->colorCapabilities = ZCL_COLOR_CAPABILITIES_BIT_HUE_SATURATION | ZCL_COLOR_CAPABILITIES_BIT_COLOR_TEMPERATURE | ZCL_COLOR_CAPABILITIES_BIT_X_Y_ATTRIBUTES;
-
 	colorInfo.currentHue256 = (u16)(pColor->currentHue) << 8;
 	colorInfo.currentSaturation256 = (u16)(pColor->currentSaturation) << 8;
 	colorInfo.currentColorTemp256 = (u32)(pColor->colorTemperatureMireds) << 8;
 	colorInfo.currentX256 = (u32)(pColor->currentX) << 8;
 	colorInfo.currentY256 = (u32)(pColor->currentY) << 8;
+	colorInfo.currentEnhancedHue256 = (u32)(pColor->enhancedCurrentHue) << 8;
 
 	colorInfo.hueRemainingTime = 0;
 	colorInfo.saturationRemainingTime = 0;
-	colorInfo.colorTempRemainingTime = 1; // Start-up with a 1 second transition
+	colorInfo.colorTempRemainingTime = 0;
 	colorInfo.xyRemainingTime = 0;
+	colorInfo.enhancedHueRemainingTime = 0;
 
 	// Startup is only defined for color temperature, so why would we load any colors here ...
 	pColor->colorMode = ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS;
@@ -150,18 +151,29 @@ void sampleLight_updateColorMode(u8 colorMode)
 {
 	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 
-	if (colorMode != pColor->colorMode)
+	if (colorMode == ZCL_COLOR_MODE_CURRENT_X_Y)
 	{
-		if (colorMode == ZCL_COLOR_MODE_CURRENT_X_Y)
-		{
-		}
-		else if (colorMode == ZCL_COLOR_MODE_CURRENT_HUE_SATURATION)
-		{
-		}
-		else if (colorMode == ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS)
-		{
-		}
+		led_off(LED_STATUS_R);
+		led_on(LED_STATUS_G);
+		led_off(LED_STATUS_B);
 	}
+	else if (colorMode == ZCL_COLOR_MODE_CURRENT_HUE_SATURATION)
+	{
+		if (pColor->enhancedColorMode == ZCL_ENHANCED_COLOR_MODE_CURRENT_HUE_SATURATION) {
+			led_on(LED_STATUS_G);
+		}
+
+		led_off(LED_STATUS_R);
+		led_off(LED_STATUS_G);
+		led_on(LED_STATUS_B);
+	}
+	else if (colorMode == ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS)
+	{
+		led_on(LED_STATUS_R);
+		led_off(LED_STATUS_G);
+		led_off(LED_STATUS_B);
+	}
+	
 }
 
 /*********************************************************************
@@ -207,8 +219,8 @@ static s32 sampleLight_colorTimerEvtCb(void *arg)
 {
 	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 
-	if ((pColor->colorMode == ZCL_COLOR_MODE_CURRENT_HUE_SATURATION) ||
-		(pColor->colorMode == ZCL_ENHANCED_COLOR_MODE_CURRENT_HUE_SATURATION))
+	if ((pColor->enhancedColorMode == ZCL_COLOR_MODE_CURRENT_HUE_SATURATION) ||
+		(pColor->enhancedColorMode == ZCL_ENHANCED_COLOR_MODE_CURRENT_HUE_SATURATION))
 	{
 		if (colorInfo.saturationRemainingTime)
 		{
@@ -228,7 +240,7 @@ static s32 sampleLight_colorTimerEvtCb(void *arg)
 							 ZCL_COLOR_ATTR_ENHANCED_HUE_MIN, ZCL_COLOR_ATTR_ENHANCED_HUE_MAX, TRUE);
 		}
 	}
-	else if (pColor->colorMode == ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS)
+	else if (pColor->enhancedColorMode == ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS)
 	{
 		if (colorInfo.colorTempRemainingTime)
 		{
@@ -236,7 +248,7 @@ static s32 sampleLight_colorTimerEvtCb(void *arg)
 								 colorInfo.colorTempMinMireds, colorInfo.colorTempMaxMireds, FALSE);
 		}
 	}
-	else if (pColor->colorMode == ZCL_COLOR_MODE_CURRENT_X_Y)
+	else if (pColor->enhancedColorMode == ZCL_COLOR_MODE_CURRENT_X_Y)
 	{
 		if (colorInfo.xyRemainingTime)
 		{
@@ -244,6 +256,7 @@ static s32 sampleLight_colorTimerEvtCb(void *arg)
 								&colorInfo.xyRemainingTime,	ZCL_COLOR_ATTR_XY_MIN, ZCL_COLOR_ATTR_XY_MAX, FALSE);
 		}
 	}
+
 	if (colorInfo.saturationRemainingTime || colorInfo.hueRemainingTime || colorInfo.enhancedHueRemainingTime || colorInfo.colorTempRemainingTime || colorInfo.xyRemainingTime)
 	{
 		return 0;
@@ -490,14 +503,16 @@ static void sampleLight_stepHueProcess(zcl_colorCtrlStepHueCmd_t *cmd)
  *
  * @return  None
  */
-static void sampleLight_moveToSaturationProcess(zcl_colorCtrlMoveToSaturationCmd_t *cmd)
+static void sampleLight_moveToSaturationProcess(zcl_colorCtrlMoveToSaturationCmd_t *cmd, bool preserveMode)
 {
 	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 
-	sampleLight_updateColorMode(ZCL_COLOR_MODE_CURRENT_HUE_SATURATION);
-
-	pColor->colorMode = ZCL_COLOR_MODE_CURRENT_HUE_SATURATION;
-	pColor->enhancedColorMode = ZCL_COLOR_MODE_CURRENT_HUE_SATURATION;
+	if (!preserveMode)
+	{
+		sampleLight_updateColorMode(ZCL_COLOR_MODE_CURRENT_HUE_SATURATION);
+		pColor->colorMode = ZCL_COLOR_MODE_CURRENT_HUE_SATURATION;
+		pColor->enhancedColorMode = ZCL_COLOR_MODE_CURRENT_HUE_SATURATION;
+	}
 
 	colorInfo.currentSaturation256 = (u16)(pColor->currentSaturation) << 8;
 
@@ -631,7 +646,7 @@ static void sampleLight_moveToHueAndSaturationProcess(zcl_colorCtrlMoveToHueAndS
 	moveToSaturationCmd.transitionTime = cmd->transitionTime;
 
 	sampleLight_moveToHueProcess(&moveToHueCmd);
-	sampleLight_moveToSaturationProcess(&moveToSaturationCmd);
+	sampleLight_moveToSaturationProcess(&moveToSaturationCmd, false);
 }
 
 
@@ -742,7 +757,6 @@ static void sampleLight_enhancedMoveToHueProcess(zcl_colorCtrlEnhancedMoveToHueC
 	pColor->enhancedColorMode = ZCL_ENHANCED_COLOR_MODE_CURRENT_HUE_SATURATION;
 
 	colorInfo.currentEnhancedHue256 = (u32)(pColor->enhancedCurrentHue) << 8;
-
 	s32 hueDiff = (s32)cmd->enhancedHue - pColor->enhancedCurrentHue;
 
 	switch (cmd->direction)
@@ -878,8 +892,8 @@ static void sampleLight_enhancedMoveToHueAndSaturationProcess(zcl_colorCtrlEnhan
 	moveToSaturationCmd.saturation = cmd->saturation;
 	moveToSaturationCmd.transitionTime = cmd->transitionTime;
 
+	sampleLight_moveToSaturationProcess(&moveToSaturationCmd, true);
 	sampleLight_enhancedMoveToHueProcess(&enhancedMoveToHueCmd);
-	sampleLight_moveToSaturationProcess(&moveToSaturationCmd);
 }
 
 /*********************************************************************
@@ -1144,7 +1158,7 @@ status_t sampleLight_colorCtrlCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, voi
 			sampleLight_stepHueProcess((zcl_colorCtrlStepHueCmd_t *)cmdPayload);
 			break;
 		case ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_SATURATION:
-			sampleLight_moveToSaturationProcess((zcl_colorCtrlMoveToSaturationCmd_t *)cmdPayload);
+			sampleLight_moveToSaturationProcess((zcl_colorCtrlMoveToSaturationCmd_t *)cmdPayload, false);
 			break;
 		case ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_SATURATION:
 			sampleLight_moveSaturationProcess((zcl_colorCtrlMoveSaturationCmd_t *)cmdPayload);

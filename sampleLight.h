@@ -33,7 +33,7 @@
 /**********************************************************************
  * TIMER CONSTANTS
  */
-#define ZCL_LEVEL_CHANGE_INTERVAL 20 // Step 50 times a second, every 20ms
+#define ZCL_LEVEL_CHANGE_INTERVAL 20 // 50 steps a second, every 20ms
 #define ZCL_COLOR_CHANGE_INTERVAL 20 // see above
 #define ZCL_REMAINING_TIME_INTERVAL 100 // 1/10th of a second according to the zigbee spec
 
