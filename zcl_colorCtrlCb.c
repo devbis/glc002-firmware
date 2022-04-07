@@ -674,6 +674,13 @@ static void sampleLight_moveToColorProcess(zcl_colorCtrlMoveToColorCmd_t *cmd)
 	pColor->colorMode = ZCL_COLOR_MODE_CURRENT_X_Y;
 	pColor->enhancedColorMode = ZCL_COLOR_MODE_CURRENT_X_Y;
 
+	// Development override, something is wrong
+	pColor->currentX = cmd->colorX;
+	pColor->currentY = cmd->colorY;
+	sampleLight_colorTimerStop();
+	light_fresh();
+	
+	/*
 	colorInfo.currentX256 = (u32)(pColor->currentX) << 8;
 	colorInfo.currentY256 = (u32)(pColor->currentY) << 8;
 
@@ -686,6 +693,8 @@ static void sampleLight_moveToColorProcess(zcl_colorCtrlMoveToColorCmd_t *cmd)
 	colorInfo.stepY256 = ((s32)(cmd->colorY - pColor->currentY)) << 8;
 	colorInfo.stepY256 /= (s32)remTime;
 
+	
+
 	light_applyXYUpdate_16(&pColor->currentX, &colorInfo.currentX256, &colorInfo.stepX256, 
 							&pColor->currentY, &colorInfo.currentY256, &colorInfo.stepY256,
 							&colorInfo.xyRemainingTime, ZCL_COLOR_ATTR_XY_MIN, ZCL_COLOR_ATTR_XY_MAX, FALSE);
@@ -695,6 +704,8 @@ static void sampleLight_moveToColorProcess(zcl_colorCtrlMoveToColorCmd_t *cmd)
 	{
 		colorTimerEvt = TL_ZB_TIMER_SCHEDULE(sampleLight_colorTimerEvtCb, NULL, ZCL_COLOR_CHANGE_INTERVAL);
 	}
+
+	*/
 }
 
 /*********************************************************************
