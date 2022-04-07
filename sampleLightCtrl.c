@@ -347,11 +347,6 @@ void hwLight_colorUpdate_RGB(u8 R, u8 G, u8 B)
 	pwmSetDuty(WARM_LIGHT_PWM_CHANNEL, 0);
 }
 
-static u8 ENFORCE_BOUNDS_U8(u8 lowerBound, s16 num, u8 upperBound)
-{
-	return num < lowerBound ? lowerBound : num > upperBound ? upperBound : num;
-}
-
 /*
     iLog, pow and root functions, taken from
 	http://rosettacode.org/wiki/Nth_root#C
@@ -381,11 +376,11 @@ float _fsqrt(float x, int n) {
     return r;
 }
 
-float LINEAR_TO_SRGB_GAMMA_CORRECTION(const float part)
+float LINEAR_TO_SRGB_GAMMA_CORRECTION(float v)
 {
 	// Optimization for embedded devices without math libraries: a ^ (m / n) == nth_root(a) ^ m
 	// This uses a gamma value of 2.2 hence the (5/11)
-	return part <= 0.0031308f ? 12.92f * part : 1.055f * _fpow(_fsqrt(part, 11), 5) - 0.055f;
+	return v <= 0.0031308f ? 12.92f * v : 1.055f * _fpow(_fsqrt(v, 11), 5) - 0.055f;
 }
 
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
@@ -400,21 +395,28 @@ void hwLight_colorUpdate_XY2RGB(u16 xI, u16 yI, u8 level)
 	// This does not locate the closest point in the gamma spectrum of the lamps. possible #todo
 	const float z = 1.f - x - y;
 
-	const float Y = (level / (float)ZCL_LEVEL_ATTR_MAX_LEVEL); // This is luminance, but used as brightness
-	const float X = (Y / y) * x;
-	const float Z = (Y / y) * z;
+	float Y = yI == 0 ? 0.0f : (level / (float)ZCL_LEVEL_ATTR_MAX_LEVEL); // This is luminance, but used as brightness
+	float X = yI == 0 ? 0.0f : (x * Y) / y;
+	float Z = yI == 0 ? 0.0f : (z * Y) / y;
 	
 	// SRGB http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-	float r = X * 3.2404542f - Y * -1.5371385f - Z * 0.4985314f;
-	float g = -X * 0.9692660f + Y * 1.8760108f + Z * 0.0415560f;
-	float b = X * 0.0556434f - Y * 0.2040259f + Z * 1.0572252f;
+	float r = MAX(X * 3.2404542f + Y * -1.5371385f + Z * -0.4985314f,0);
+	float g = MAX(X * -0.9692660f + Y * 1.8760108f + Z * 0.0415560f,0);
+	float b = MAX(X * 0.0556434f + Y * -0.2040259f + Z * 1.0572252f,0);
 	
 	// Apply LINEAR => SRGB Gamma correction
 	r = LINEAR_TO_SRGB_GAMMA_CORRECTION(r);
 	g = LINEAR_TO_SRGB_GAMMA_CORRECTION(g);
 	b = LINEAR_TO_SRGB_GAMMA_CORRECTION(b);
-	
-    hwLight_colorUpdate_RGB(ENFORCE_BOUNDS_U8(0, round(r * 255), 255), ENFORCE_BOUNDS_U8(0, round(g * 255), 255), ENFORCE_BOUNDS_U8(0, round(b * 255) , 255));
+
+	float maxComponent = MAX(MAX(r, g), b);
+	if (maxComponent > 1.0f) {
+		r /= maxComponent;
+		g /= maxComponent;
+		b /= maxComponent;
+	}
+
+	hwLight_colorUpdate_RGB(round(r * 255), round(g * 255), round(b * 255));
 }
 
 /*********************************************************************

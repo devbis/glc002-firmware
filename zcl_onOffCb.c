@@ -33,11 +33,6 @@
 #include "sampleLightCtrl.h"
 
 /**********************************************************************
- * LOCAL CONSTANTS
- */
-#define ZCL_ONOFF_TIMER_INTERVAL 100 // the timer interval to change the offWaitTime/onTime attribute of the ONOFF cluster
-
-/**********************************************************************
  * LOCAL VARIABLES
  */
 static ev_timer_event_t *onWithTimedOffTimerEvt = NULL;
@@ -207,6 +202,7 @@ static void sampleLight_onoff_onWithTimedOffProcess(zcl_onoff_onWithTimeOffCmd_t
 {
 	zcl_onOffAttr_t *pOnOff = zcl_onoffAttrGet();
 
+	// Discard
 	if (cmd->onOffCtrl.bits.acceptOnlyWhenOn && (pOnOff->onOff == ZCL_ONOFF_STATUS_OFF))
 	{
 		return;
@@ -223,7 +219,7 @@ static void sampleLight_onoff_onWithTimedOffProcess(zcl_onoff_onWithTimeOffCmd_t
 		sampleLight_onoff(ZCL_CMD_ONOFF_ON);
 	}
 
-	if ((pOnOff->onTime < 0xFFFF) && (pOnOff->offWaitTime < 0xFFFF))
+	if (pOnOff->onTime < 0xFFFF && pOnOff->offWaitTime < 0xFFFF)
 	{
 		if (pOnOff->onTime || pOnOff->offWaitTime)
 		{

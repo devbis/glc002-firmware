@@ -164,7 +164,7 @@ static void sampleLight_moveToLevelProcess(u8 cmdId, moveToLvl_t *cmd)
 {
 	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
 
-	pLevel->remainingTime = ((cmd->transitionTime == 0) || (cmd->transitionTime == 0xFFFF)) ? 1 : INTERP_STEPS_FROM_REM_TIME(cmd->transitionTime, ZCL_LEVEL_CHANGE_INTERVAL);
+	pLevel->remainingTime = ((cmd->transitionTime == 0) || (cmd->transitionTime == 0xFFFF)) ? 1 : INTERP_STEPS_FROM_ONE_TENTH(cmd->transitionTime, ZCL_LEVEL_CHANGE_INTERVAL);
 
 	levelInfo.withOnOff = (cmdId == ZCL_CMD_LEVEL_MOVE_TO_LEVEL_WITH_ON_OFF) ? TRUE : FALSE;
 	levelInfo.currentLevel256 = (u16)(pLevel->curLevel) << 8;
@@ -272,7 +272,7 @@ static void sampleLight_stepProcess(u8 cmdId, step_t *cmd)
 {
 	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
 
-	pLevel->remainingTime = ((cmd->transitionTime == 0) || (cmd->transitionTime == 0xFFFF)) ? 1 : INTERP_STEPS_FROM_REM_TIME(cmd->transitionTime, ZCL_LEVEL_CHANGE_INTERVAL);
+	pLevel->remainingTime = ((cmd->transitionTime == 0) || (cmd->transitionTime == 0xFFFF)) ? 1 : INTERP_STEPS_FROM_ONE_TENTH(cmd->transitionTime, ZCL_LEVEL_CHANGE_INTERVAL);
 
 	levelInfo.withOnOff = (cmdId == ZCL_CMD_LEVEL_STEP_WITH_ON_OFF) ? TRUE : FALSE;
 	levelInfo.currentLevel256 = (u16)(pLevel->curLevel) << 8;
