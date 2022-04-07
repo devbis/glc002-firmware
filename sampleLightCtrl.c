@@ -358,10 +358,10 @@ void hwLight_colorUpdate_XY2RGB(u16 xI, u16 yI, u8 level)
 	float X = yI == 0 ? 0.0f : (x * Y) / y;
 	float Z = yI == 0 ? 0.0f : (z * Y) / y;
 	
-	// Wide Gamut RGB D50 http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-	float r = max2(X * 1.4628067f + Y * -0.1840623f + Z * -0.2743606f,0);
-	float g = max2(X * -0.5217933f + Y * 1.4472381f + Z * 0.0677227f,0);
-	float b = max2(X * 0.0349342f + Y * -0.0968930f + Z * 1.2884099f,0);
+	// S-RGB D65 http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+	float r = max2(X * 3.2404542f + Y * -1.5371385f + Z * -0.4985314f,0);
+	float g = max2(X * -0.9692660f + Y * 1.8760108f + Z * 0.0415560f,0);
+	float b = max2(X * 0.0556434f + Y * -0.2040259f + Z * 1.0572252f,0);
 	
 	// Apply LINEAR => SRGB Gamma correction
 	r = LINEAR_TO_SRGB_GAMMA_CORRECTION(r);
