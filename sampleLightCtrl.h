@@ -33,7 +33,6 @@
  */
 void hwLight_init(void);
 void hwLight_onOffUpdate(u8 onOff);
-void hwLight_levelUpdate(u8 level);
 void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level);
 void hwLight_colorUpdate_HSV2RGB(u16 hue, u8 saturation, u8 level, bool enhanced);
 void hwLight_colorUpdate_RGB(u8 R, u8 G, u8 B);

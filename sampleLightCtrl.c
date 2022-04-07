@@ -30,6 +30,7 @@
 #include "zcl_include.h"
 #include "sampleLight.h"
 #include "sampleLightCtrl.h"
+#include "helpers.h"
 
 /**********************************************************************
  * LOCAL CONSTANTS
@@ -50,11 +51,9 @@
  * FUNCTIONS
  */
 extern void sampleLight_updateOnOff(void);
-extern void sampleLight_updateLevel(void);
 extern void sampleLight_updateColor(void);
 
 extern void sampleLight_onOffInit(void);
-extern void sampleLight_levelInit(void);
 extern void sampleLight_colorInit(void);
 
 /*********************************************************************
@@ -147,27 +146,6 @@ void hwLight_onOffUpdate(u8 onOff)
 }
 
 /*********************************************************************
- * @fn      hwLight_levelUpdate
- *
- * @brief
- *
- * @param   level - level attribute value
- *
- * @return  None
- */
-void hwLight_levelUpdate(u8 level)
-{
-	/* Use this if no rgb support
-#if !defined COLOR_RGB_SUPPORT || (COLOR_RGB_SUPPORT == 0)
-	level = (level < 0x10) ? 0x10 : level;
-
-	u16 gammaCorrectLevel = ((u16)level * level) / ZCL_LEVEL_ATTR_MAX_LEVEL;
-
-	pwmSetDuty(COOL_LIGHT_PWM_CHANNEL, gammaCorrectLevel * PWM_FULL_DUTYCYCLE);
-#endif*/
-}
-
-/*********************************************************************
  * @fn      temperatureToCW
  *
  * @brief
@@ -187,6 +165,25 @@ void temperatureToCW(u16 temperatureMireds, u8 level, u8 *C, u8 *W)
 	*C = level - (*W);
 }
 
+/**
+ * @brief This function returns the light level percentage according to the zigbee dimming curve
+ * Original formula in zigbee spec: powf(10, ((level-1)/(253.f/3.f)) - 1) / 100.f;
+
+ * @param level the level value
+ * @return float the percentage of light output between 0.f and 1.f
+ */
+float getZBLightLevelPercentage(u8 level) {
+	bool negativeRoot = ((3*level) - 256) < 0;
+    float fLevelOpt;
+    if (negativeRoot) {
+        fLevelOpt = (_fpow(1/_fsqrt(10, 253), abs((3*level) - 256)));
+    } else {
+        fLevelOpt = (_fpow(_fsqrt(10, 253), (3*level) - 256));
+    }
+
+	return fLevelOpt / 99.998390f;
+}
+
 /*********************************************************************
  * @fn      hwLight_colorUpdate_colorTemperature
  *
@@ -202,7 +199,7 @@ void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
 	u8 C = 0;
 	u8 W = 0;
 
-	level = (level < 0x10) ? 0x10 : level;
+	level = getZBLightLevelPercentage(level) * ZCL_LEVEL_ATTR_MAX_LEVEL;
 
 	temperatureToCW(colorTemperatureMireds, level, &C, &W);
 
@@ -238,7 +235,7 @@ void hsvToRGB(u16 hue, u8 saturation, u8 level, u8 *R, u8 *G, u8 *B, bool enhanc
 
 	u16 rHue = (u32)hue * 360 / (enhanced ? ZCL_COLOR_ATTR_ENHANCED_HUE_MAX : ZCL_COLOR_ATTR_HUE_MAX);
 	u8 rS = saturation;
-	u8 rV = level;
+	u8 rV = getZBLightLevelPercentage(level) * 255;
 
 	if (saturation == 0)
 	{
@@ -347,45 +344,12 @@ void hwLight_colorUpdate_RGB(u8 R, u8 G, u8 B)
 	pwmSetDuty(WARM_LIGHT_PWM_CHANNEL, 0);
 }
 
-/*
-    iLog, pow and root functions, taken from
-	http://rosettacode.org/wiki/Nth_root#C
-*/
-float _fpow(float x, int e) {
-    int i;
-    float r = 1;
-    for (i = 0; i < e; i++) {
-        r *= x;
-    }
-    return r;
-}
-
-float _fsqrt(float x, int n) {
-    float d, r = 1;
-    if (!x) {
-        return 0;
-    }
-    if (n < 1 || (x < 0 && !(n&1))) {
-        return 0.0 / 0.0; /* NaN */
-    }
-    do {
-        d = (x / _fpow(r, n - 1) - r) / n;
-        r += d;
-    }
-    while (d >= 0.000010f * 10 || d <= -0.000010f * 10);
-    return r;
-}
-
 float LINEAR_TO_SRGB_GAMMA_CORRECTION(float v)
 {
 	// Optimization for embedded devices without math libraries: a ^ (m / n) == nth_root(a) ^ m
 	// This uses a gamma value of 2.2 hence the (5/11)
 	return v <= 0.0031308f ? 12.92f * v : 1.055f * _fpow(_fsqrt(v, 11), 5) - 0.055f;
 }
-
-#define MAX(x,y) ((x) > (y) ? (x) : (y))
-#define MIN(x,y) ((x) < (y) ? (x) : (y))
-#define round(a) (s16) (a+0.5) 
 
 void hwLight_colorUpdate_XY2RGB(u16 xI, u16 yI, u8 level)
 {
@@ -395,21 +359,21 @@ void hwLight_colorUpdate_XY2RGB(u16 xI, u16 yI, u8 level)
 	// This does not locate the closest point in the gamma spectrum of the lamps. possible #todo
 	const float z = 1.f - x - y;
 
-	float Y = yI == 0 ? 0.0f : (level / (float)ZCL_LEVEL_ATTR_MAX_LEVEL); // This is luminance, but used as brightness
+	float Y = yI == 0 ? 0.0f : getZBLightLevelPercentage(level); // This is luminance, but used as brightness
 	float X = yI == 0 ? 0.0f : (x * Y) / y;
 	float Z = yI == 0 ? 0.0f : (z * Y) / y;
 	
 	// SRGB http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-	float r = MAX(X * 3.2404542f + Y * -1.5371385f + Z * -0.4985314f,0);
-	float g = MAX(X * -0.9692660f + Y * 1.8760108f + Z * 0.0415560f,0);
-	float b = MAX(X * 0.0556434f + Y * -0.2040259f + Z * 1.0572252f,0);
+	float r = max2(X * 3.2404542f + Y * -1.5371385f + Z * -0.4985314f,0);
+	float g = max2(X * -0.9692660f + Y * 1.8760108f + Z * 0.0415560f,0);
+	float b = max2(X * 0.0556434f + Y * -0.2040259f + Z * 1.0572252f,0);
 	
 	// Apply LINEAR => SRGB Gamma correction
 	r = LINEAR_TO_SRGB_GAMMA_CORRECTION(r);
 	g = LINEAR_TO_SRGB_GAMMA_CORRECTION(g);
 	b = LINEAR_TO_SRGB_GAMMA_CORRECTION(b);
 
-	float maxComponent = MAX(MAX(r, g), b);
+	float maxComponent = max3(r, g, b);
 	if (maxComponent > 1.0f) {
 		r /= maxComponent;
 		g /= maxComponent;
@@ -430,13 +394,7 @@ void hwLight_colorUpdate_XY2RGB(u16 xI, u16 yI, u8 level)
  */
 void light_adjust(void)
 {
-#ifdef ZCL_LIGHT_COLOR_CONTROL
 	sampleLight_colorInit();
-#else
-#ifdef ZCL_LEVEL_CTRL
-	sampleLight_levelInit();
-#endif
-#endif
 	sampleLight_onOffInit();
 }
 
@@ -451,17 +409,8 @@ void light_adjust(void)
  */
 void light_fresh(void)
 {
-#ifdef ZCL_LIGHT_COLOR_CONTROL
 	sampleLight_updateColor();
-#else
-#ifdef ZCL_LEVEL_CTRL
-	sampleLight_updateLevel();
-#else
-	pwmSetDuty(COOL_LIGHT_PWM_CHANNEL, ZCL_LEVEL_ATTR_MAX_LEVEL * PWM_FULL_DUTYCYCLE);
-#endif
-#endif
 	sampleLight_updateOnOff();
-
 	gLightCtx.lightAttrsChanged = TRUE;
 }
 

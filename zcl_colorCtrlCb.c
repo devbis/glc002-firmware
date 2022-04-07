@@ -679,13 +679,15 @@ static void sampleLight_moveToColorProcess(zcl_colorCtrlMoveToColorCmd_t *cmd)
 	pColor->currentY = cmd->colorY;
 	sampleLight_colorTimerStop();
 	light_fresh();
-	
+
 	/*
 	colorInfo.currentX256 = (u32)(pColor->currentX) << 8;
 	colorInfo.currentY256 = (u32)(pColor->currentY) << 8;
 
-	u16 remTime = (cmd->transitionTime == 0) ? 1 : INTERP_STEPS_FROM_ONE_TENTH(cmd->transitionTime, ZCL_COLOR_CHANGE_INTERVAL);
-	colorInfo.xyRemainingTime = remTime;
+	u16 remTime = INTERP_STEPS_FROM_ONE_TENTH(cmd->transitionTime, ZCL_COLOR_CHANGE_INTERVAL);
+
+	// Instantaneous update or follow the time-steps calculated above.
+	colorInfo.xyRemainingTime = remTime == 0 ? 1 : remTime;
 
 	colorInfo.stepX256 = ((s32)(cmd->colorX - pColor->currentX)) << 8;
 	colorInfo.stepX256 /= (s32)remTime;

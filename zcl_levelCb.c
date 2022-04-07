@@ -54,47 +54,6 @@ static zcl_levelInfo_t levelInfo = {
 
 static ev_timer_event_t *levelTimerEvt = NULL;
 
-/**********************************************************************
- * FUNCTIONS
- */
-
-/*********************************************************************
- * @fn      sampleLight_levelInit
- *
- * @brief
- *
- * @param   None
- *
- * @return  None
- */
-void sampleLight_levelInit(void)
-{
-	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
-
-	pLevel->remainingTime = 0;
-
-	levelInfo.currentLevel256 = (u16)(pLevel->curLevel) << 8;
-
-	light_applyUpdate(&pLevel->curLevel, &levelInfo.currentLevel256, &levelInfo.stepLevel256, &pLevel->remainingTime,
-					  ZCL_LEVEL_ATTR_MIN_LEVEL, ZCL_LEVEL_ATTR_MAX_LEVEL, FALSE);
-}
-
-/*********************************************************************
- * @fn      sampleLight_updateLevel
- *
- * @brief
- *
- * @param   None
- *
- * @return  None
- */
-void sampleLight_updateLevel(void)
-{
-	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
-
-	hwLight_levelUpdate(pLevel->curLevel);
-}
-
 /*********************************************************************
  * @fn      sampleLight_levelTimerEvtCb
  *
