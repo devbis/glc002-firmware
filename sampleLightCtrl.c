@@ -35,7 +35,7 @@
 /**********************************************************************
  * LOCAL CONSTANTS
  */
-#define PWM_FREQUENCY 480 // 480 hz
+#define PWM_FREQUENCY 4800 // 4.8khz
 #define PWM_FULL_DUTYCYCLE 100
 #define PMW_MAX_TICK (PWM_CLOCK_SOURCE / PWM_FREQUENCY)
 
@@ -199,8 +199,6 @@ void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
 	u8 C = 0;
 	u8 W = 0;
 
-	level = getZBLightLevelPercentage(level) * ZCL_LEVEL_ATTR_MAX_LEVEL;
-
 	temperatureToCW(colorTemperatureMireds, level, &C, &W);
 
 	u16 gammaCorrectC = ((u16)C * C) / ZCL_LEVEL_ATTR_MAX_LEVEL;
@@ -235,7 +233,7 @@ void hsvToRGB(u16 hue, u8 saturation, u8 level, u8 *R, u8 *G, u8 *B, bool enhanc
 
 	u16 rHue = (u32)hue * 360 / (enhanced ? ZCL_COLOR_ATTR_ENHANCED_HUE_MAX : ZCL_COLOR_ATTR_HUE_MAX);
 	u8 rS = saturation;
-	u8 rV = getZBLightLevelPercentage(level) * 255;
+	u8 rV = level;
 
 	if (saturation == 0)
 	{
@@ -316,9 +314,6 @@ void hwLight_colorUpdate_HSV2RGB(u16 hue, u8 saturation, u8 level, bool enhanced
 	u8 G = 0;
 	u8 B = 0;
 
-	// No idea why this is here, lets see what happens with a more minimal value
-	level = (level < 0x01) ? 0x01 : level;
-
 	hsvToRGB(hue, saturation, level, &R, &G, &B, enhanced);
 
 	hwLight_colorUpdate_RGB(R, G, B);
@@ -359,14 +354,14 @@ void hwLight_colorUpdate_XY2RGB(u16 xI, u16 yI, u8 level)
 	// This does not locate the closest point in the gamma spectrum of the lamps. possible #todo
 	const float z = 1.f - x - y;
 
-	float Y = yI == 0 ? 0.0f : getZBLightLevelPercentage(level); // This is luminance, but used as brightness
+	float Y = level / (float)ZCL_LEVEL_ATTR_MAX_LEVEL;
 	float X = yI == 0 ? 0.0f : (x * Y) / y;
 	float Z = yI == 0 ? 0.0f : (z * Y) / y;
 	
-	// SRGB http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
-	float r = max2(X * 3.2404542f + Y * -1.5371385f + Z * -0.4985314f,0);
-	float g = max2(X * -0.9692660f + Y * 1.8760108f + Z * 0.0415560f,0);
-	float b = max2(X * 0.0556434f + Y * -0.2040259f + Z * 1.0572252f,0);
+	// Wide Gamut RGB D50 http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html
+	float r = max2(X * 1.4628067f + Y * -0.1840623f + Z * -0.2743606f,0);
+	float g = max2(X * -0.5217933f + Y * 1.4472381f + Z * 0.0677227f,0);
+	float b = max2(X * 0.0349342f + Y * -0.0968930f + Z * 1.2884099f,0);
 	
 	// Apply LINEAR => SRGB Gamma correction
 	r = LINEAR_TO_SRGB_GAMMA_CORRECTION(r);
