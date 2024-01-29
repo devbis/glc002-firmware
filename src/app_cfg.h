@@ -100,6 +100,8 @@ extern "C"
 #define ZBHCI_EN 1
 #endif
 
+#define VOLTAGE_DETECT_ADC_PIN                                  GPIO_PC5
+
 /**********************************************************************
  * ZCL cluster support setting
  */

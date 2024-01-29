@@ -165,7 +165,7 @@ void user_app_init(void)
 
 #if ZCL_GP_SUPPORT
 	/* Initialize GP */
-	gp_init();
+	gp_init(SAMPLE_LIGHT_ENDPOINT);
 #endif
 
 #if ZCL_OTA_SUPPORT
